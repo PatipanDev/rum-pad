@@ -44,3 +44,7 @@ flutter pub get
 flutter run -d windows
 ## รัน androids
 flutter run -d android
+
+
+## รัน Riverpod
+dart run build_runner watch

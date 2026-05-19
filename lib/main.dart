@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
-import 'package:rum_tap/core/audio/audio_manager.dart';
-import 'package:rum_tap/features/drum_pad/drum_pad_page.dart';
-import 'package:rum_tap/features/drum_pad/models/pad_kits.dart';
-import 'package:rum_tap/features/home/ui/audio_settings_widget.dart';
+import 'package:rum_tap/provider/audio_provider.dart';
+import 'package:rum_tap/widgets/pads/drum_pad_panel.dart';
+import 'package:rum_tap/widgets/mixer/mixer_panel.dart';
+import 'package:rum_tap/widgets/pads/music_pad_panel.dart';
+import 'package:rum_tap/widgets/panel/mixer_and_fade_panel.dart';
 import 'l10n/app_localizations.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 void main() async {
   // 2. ต้องใส่บรรทัดนี้ เพื่อให้แน่ใจว่า Flutter Engine พร้อมทำงานก่อนสั่งล็อกหน้าจอ
@@ -16,13 +18,47 @@ void main() async {
     DeviceOrientation.landscapeRight,
   ]);
 
-  await AudioManager().init();
+  runApp(const ProviderScope(child: AppBootstrap()));
+}
 
-  await AudioManager().preloadPads(
-    PadKits.kits.values.expand((e) => e).toList(),
-  );
+/////
+class AppBootstrap extends ConsumerStatefulWidget {
+  const AppBootstrap({super.key});
 
-  runApp(const MyApp());
+  @override
+  ConsumerState<AppBootstrap> createState() => _AppBootstrapState();
+}
+
+class _AppBootstrapState extends ConsumerState<AppBootstrap> {
+  bool _ready = false;
+
+  @override
+  void initState() {
+    super.initState();
+
+    Future.microtask(() async {
+      final audio = ref.read(audioControllerProvider.notifier);
+
+      await audio.init();
+      await audio.preloadPads();
+      await audio.preloadMusics();
+
+      setState(() {
+        _ready = true;
+      });
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (!_ready) {
+      return const MaterialApp(
+        home: Scaffold(body: Center(child: CircularProgressIndicator())),
+      );
+    }
+
+    return const MyApp();
+  }
 }
 
 class MyApp extends StatelessWidget {
@@ -71,59 +107,14 @@ class _MyHomePageState extends State<MyHomePage> {
         child: Row(
           children: [
             // --- พื้นที่ส่วนที่ 1 (20%) ---
-            Expanded(
-              flex: 20,
-              child: Container(
-                color: Colors.red[200],
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: [
-                    /// 🎵 MUSIC
-                    buildMixerSlider(
-                      context,
-                      title: "Music",
-                      value: musicVolume,
-                      onChanged: (v) {
-                        setState(() {
-                          sfxVolume = v;
-                        });
-
-                        AudioManager().setMusicVolume(
-                          v,
-                        ); // ⭐ คุมเสียง pad ทั้งหมด
-                      },
-                    ),
-
-                    /// 🔊 SFX
-                    buildMixerSlider(
-                      context,
-                      title: "SFX",
-                      value: sfxVolume,
-                      onChanged: (v) {
-                        setState(() {
-                          sfxVolume = v;
-                        });
-
-                        AudioManager().setSfxVolume(
-                          v,
-                        ); // ⭐ คุมเสียง pad ทั้งหมด
-                      },
-                    ),
-                  ],
-                ),
-              ),
-            ),
-
+            Expanded(flex: 20, child: MixerAndFadePanel()),
             // --- พื้นที่ส่วนที่ 2 (40%) ---
-            Expanded(
+            const Expanded(
               flex: 30, // กำหนดสัดส่วน 40%
-              child: Container(
-                color: Colors.blue[200],
-                child: const Center(child: Text('40%')),
-              ),
+              child: MusicPadPanel(),
             ),
             // --- พื้นที่ส่วนที่ 3 (40%) ---
-            const Expanded(flex: 50, child: DrumPadPage()),
+            const Expanded(flex: 50, child: DrumPadPanel()),
           ],
         ),
       ),

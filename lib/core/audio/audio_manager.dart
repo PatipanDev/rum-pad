@@ -14,19 +14,29 @@ class AudioManager {
   final List<AudioPlayer> _sfxPool = [];
   static const int _poolSize = 8;
 
+  /// 🎵 MUSIC PAD (เพลงหลายช่อง)
+  final Map<String, AudioPlayer> _musicPads = {};
+  final Map<String, bool> _musicPadPlayingState = {};
+
   final Map<String, List<AudioPlayer>> _padPlayers = {};
   static const int _playersPerSound = 4;
+  final Map<String, bool> _padPlayingState = {};
 
   double musicVolume = 0.5;
   double sfxVolume = 0.5;
 
   bool _initialized = false;
-
   bool _padsPreloaded = false;
-  String? _lastPadAsset;
+
+  //ปุ่มเปิดปิด เสียง
+  bool isMusicMuted = false;
+  bool isSfxMuted = false;
 
   //บอกสถานะ ui
-  final Map<String, bool> _padPlayingState = {};
+
+  bool isMusicPadPlaying(String asset) {
+    return _musicPadPlayingState[asset] ?? false;
+  }
 
   bool isPadPlaying(String asset) {
     return _padPlayingState[asset] ?? false;
@@ -48,6 +58,27 @@ class AudioManager {
       final player = AudioPlayer();
       player.setVolume(sfxVolume);
       _sfxPool.add(player);
+    }
+  }
+
+  Future<void> preloadMusicPads(List<String> assets) async {
+    for (final asset in assets) {
+      if (_musicPads.containsKey(asset)) continue;
+
+      final player = AudioPlayer();
+      await player.setAsset(asset);
+
+      player.setLoopMode(LoopMode.one); // ⭐ เพลงวน
+      player.setVolume(musicVolume);
+
+      player.playerStateStream.listen((state) {
+        if (state.processingState == ProcessingState.completed) {
+          _musicPadPlayingState[asset] = false;
+        }
+      });
+
+      _musicPads[asset] = player;
+      _musicPadPlayingState[asset] = false;
     }
   }
 
@@ -87,6 +118,28 @@ class AudioManager {
     return players.first; // ถ้าเต็ม เอาตัวแรก
   }
 
+  Future<void> playMusicPad(String asset) async {
+    if (!_musicPads.containsKey(asset)) {
+      debugPrint("Music not preloaded: $asset");
+      return;
+    }
+
+    /// ⭐ หยุดเพลงอื่นก่อน (สำคัญมาก)
+    for (final p in _musicPads.values) {
+      if (p.playing) await p.stop();
+    }
+
+    for (final key in _musicPadPlayingState.keys) {
+      _musicPadPlayingState[key] = false;
+    }
+
+    final player = _musicPads[asset]!;
+    await player.seek(Duration.zero);
+    player.play();
+
+    _musicPadPlayingState[asset] = true;
+  }
+
   /// 🎛 เล่นเสียง Pad (กดพร้อมกันได้)
   Future<void> playPad(String asset) async {
     if (!_padPlayers.containsKey(asset)) {
@@ -115,6 +168,23 @@ class AudioManager {
     _padPlayingState[asset] = false;
   }
 
+  Future<void> stopMusicPad(String asset) async {
+    if (!_musicPads.containsKey(asset)) return;
+
+    await _musicPads[asset]!.stop();
+    _musicPadPlayingState[asset] = false;
+  }
+
+  Future<void> stopAllMusicPads() async {
+    for (final p in _musicPads.values) {
+      if (p.playing) await p.stop();
+    }
+
+    for (final key in _musicPadPlayingState.keys) {
+      _musicPadPlayingState[key] = false;
+    }
+  }
+
   Future<void> stopAllPads() async {
     for (final players in _padPlayers.values) {
       for (final p in players) {
@@ -138,8 +208,18 @@ class AudioManager {
   /// 🎚 ปรับ volume เพลง
   void setMusicVolume(double v) {
     musicVolume = v;
+
+    if (isMusicMuted) return;
+
     musicPlayer.setVolume(v);
+
+    /// ⭐ เพิ่มส่วนนี้
+    for (final p in _musicPads.values) {
+      p.setVolume(v);
+    }
   }
+
+ 
 
   /// 🎚 ปรับ volume SFX (ต้องปรับทั้ง pool)
   void setSfxVolume(double v) {
@@ -154,6 +234,45 @@ class AudioManager {
     for (final players in _padPlayers.values) {
       for (final p in players) {
         p.setVolume(v);
+      }
+    }
+  }
+
+
+   //สลับเปิดปิดเสียงเพลง
+  void toggleMusicMute() {
+    isMusicMuted = !isMusicMuted; // สลับสถานะ true <-> false
+
+    if (isMusicMuted) {
+      // กรณีกด "ปิดเสียง" -> สั่งให้ทุกตัวเป็น 0 (แต่ค่า musicVolume เดิมยังถูกจำไว้อยู่)
+      musicPlayer.setVolume(0.0);
+      for (final p in _musicPads.values) {
+        p.setVolume(0.0);
+      }
+    } else {
+      // กรณีกด "เปิดเสียง" -> ดึงค่าความดัง musicVolume ล่าสุดกลับคืนมาทันที
+      musicPlayer.setVolume(musicVolume);
+      for (final p in _musicPads.values) {
+        p.setVolume(musicVolume);
+      }
+    }
+  }
+
+
+  void toggleSfxMute() {
+    isSfxMuted = !isSfxMuted; // สลับสถานะ true <-> false
+
+    if (isSfxMuted) {
+      // กรณีกด "ปิดเสียง" -> สั่งให้ทุกตัวเป็น 0 (แต่ค่า musicVolume เดิมยังถูกจำไว้อยู่)
+      musicPlayer.setVolume(0.0);
+      for (final p in _musicPads.values) {
+        p.setVolume(0.0);
+      }
+    } else {
+      // กรณีกด "เปิดเสียง" -> ดึงค่าความดัง musicVolume ล่าสุดกลับคืนมาทันที
+      musicPlayer.setVolume(musicVolume);
+      for (final p in _musicPads.values) {
+        p.setVolume(musicVolume);
       }
     }
   }

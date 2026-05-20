@@ -24,6 +24,9 @@ class AudioService {
   void Function(String asset)? _onPadFinished;
   void Function(String asset)? _onMusicPadFinished;
 
+  AudioPlayer? _currentMusicPlayer;
+  String? _currentAsset;
+
   void setOnPadFinished(void Function(String asset) callback) {
     _onPadFinished = callback;
   }
@@ -140,29 +143,45 @@ class AudioService {
     print("▶️ play called");
   }
 
+  final Set<AudioPlayer> _listenedPlayers = {};
+
+  void _attachListener(AudioPlayer player, String asset) {
+    if (_listenedPlayers.contains(player)) return;
+
+    _listenedPlayers.add(player);
+
+    player.playerStateStream.listen((state) {
+      if (state.processingState == ProcessingState.completed) {
+        if (_currentAsset == asset) {
+          _onMusicPadFinished?.call(asset);
+        }
+      }
+    });
+  }
+
   Future<void> playMusic(String asset) async {
-    if (!_musicPads.containsKey(asset)) {
+    final player = _musicPads[asset];
+
+    if (player == null) {
       debugPrint("Music not preloaded: $asset");
       return;
     }
 
-    /// ⭐ หยุดเพลงอื่นก่อน (สำคัญมาก)
-    for (final p in _musicPads.values) {
-      if (p.playing) await p.stop();
-    }
+    /// ⭐ 1. หยุดเพลงปัจจุบัน (ถ้ามี)
+    await _currentMusicPlayer?.stop();
 
-    final player = _musicPads[asset]!;
+    /// ⭐ 2. ตั้งตัวใหม่เป็น active
+    _currentMusicPlayer = player;
+    _currentAsset = asset;
+
+    /// ⭐ 3. reset แล้วเล่นใหม่
     await player.seek(Duration.zero);
 
-    // ⭐ listen ตอนจบ (สำคัญ)
-    player.playerStateStream.listen((state) {
-      if (state.processingState == ProcessingState.completed) {
-        // 🔥 ถ้าใช้ Riverpod ต้อง notify ด้วย
-        _onMusicPadFinished?.call(asset);
-      }
-    });
+    /// ⭐ 4. เล่น
+    await player.play();
 
-    player.play();
+    /// ⭐ 5. subscribe แค่ครั้งเดียว (กัน leak)
+    _attachListener(player, asset);
   }
 
   // ---------- VOLUME ----------
@@ -206,5 +225,147 @@ class AudioService {
         p.dispose();
       }
     }
+  }
+
+  Future<void> _fadePlayer({
+    required AudioPlayer player,
+    required double fromVolume,
+    required double toVolume,
+    Duration duration = const Duration(
+      milliseconds: 1500,
+    ), // เวลาในการ Fade (ค่าเริ่มต้น 1.5 วินาที)
+  }) async {
+    final int steps = 30; // จำนวนขั้นในการซอยปรับระดับเสียง ยิ่งเยอะยิ่งเนียน
+    final Duration interval = duration ~/ steps; // เวลาที่รอในแต่ละขั้น
+    final double volumeStep = (toVolume - fromVolume) / steps;
+
+    double currentVolume = fromVolume;
+    await player.setVolume(currentVolume);
+
+    for (int i = 0; i < steps; i++) {
+      await Future.delayed(interval);
+
+      // ตรวจสอบเผื่อกรณีผู้ใช้สั่งหยุดหรือกดข้ามกระทันหันจนเครื่องเล่นปิดไปแล้ว
+      if (!player.playing && toVolume < fromVolume) break;
+
+      currentVolume += volumeStep;
+      // ล็อคขอบเขตเสียงไม่ให้เกิน 0.0 - 1.0
+      currentVolume = currentVolume.clamp(0.0, 1.0);
+      await player.setVolume(currentVolume);
+    }
+
+    // บังคับให้เสียงจบที่เป้าหมายอย่างแม่นยำ
+    await player.setVolume(toVolume);
+  }
+
+  // 1. ฟังก์ชันเปิดเพลงพร้อม Fade In
+  // ---------- FADE IN สำหรับเพลงทั้งหมดที่เก็บไว้ ----------
+  Future<void> fadeInAllMusicVolume({
+    Duration duration = const Duration(milliseconds: 1500),
+  }) async {
+    if (_musicPads.isEmpty) return;
+
+    final int steps = 30;
+    final Duration interval = duration ~/ steps;
+
+    // 🔥 อ่าน volume เป้าหมายจาก global musicVolume
+    final double targetVolume = musicVolume;
+
+    // เริ่มจาก volume ปัจจุบัน (สำคัญมาก)
+    double currentVolume = 0.0;
+
+    // อ่าน volume ปัจจุบันจาก player ตัวแรก (สมมุติว่าทุกตัวเท่ากัน)
+    final firstPlayer = _musicPads.values.first;
+    currentVolume = firstPlayer.volume;
+
+    final double volumeStep = (targetVolume - currentVolume) / steps;
+
+    for (int i = 0; i < steps; i++) {
+      await Future.delayed(interval);
+
+      currentVolume += volumeStep;
+      currentVolume = currentVolume.clamp(0.0, targetVolume);
+
+      for (final player in _musicPads.values) {
+        await player.setVolume(currentVolume);
+      }
+    }
+
+    // จบแบบเป๊ะ
+    for (final player in _musicPads.values) {
+      await player.setVolume(targetVolume);
+    }
+  }
+
+  Future<void> fadeOutAllMusicVolume({
+    Duration duration = const Duration(milliseconds: 1500),
+  }) async {
+    if (_musicPads.isEmpty) return;
+
+    final int steps = 30;
+    final Duration interval = duration ~/ steps;
+
+    final firstPlayer = _musicPads.values.first;
+    double currentVolume = firstPlayer.volume;
+
+    final double volumeStep = currentVolume / steps;
+
+    for (int i = 0; i < steps; i++) {
+      await Future.delayed(interval);
+
+      currentVolume -= volumeStep;
+      currentVolume = currentVolume.clamp(0.0, 1.0);
+
+      for (final player in _musicPads.values) {
+        await player.setVolume(currentVolume);
+      }
+    }
+
+    for (final player in _musicPads.values) {
+      await player.setVolume(0);
+    }
+  }
+
+  // ---------- FADE OUT สำหรับเพลงทั้งหมดที่กำลังเล่น ----------
+  Future<void> stopAllMusicWithFadeOut({
+    Duration duration = const Duration(milliseconds: 1500),
+  }) async {
+    if (_musicPads.isEmpty) return;
+
+    final int steps = 30;
+    final Duration interval = duration ~/ steps;
+
+    // คิดสเต็ปการลดเสียงอิงจากระดับเสียงปัจจุบัน
+    final double volumeStep = musicVolume / steps;
+
+    double currentVolume = musicVolume;
+
+    for (int i = 0; i < steps; i++) {
+      await Future.delayed(interval);
+      currentVolume -= volumeStep;
+      currentVolume = currentVolume.clamp(0.0, 1.0);
+
+      // วนลูปหรี่เสียงลงพร้อมกันทุกตัว
+      for (final player in _musicPads.values) {
+        if (player.playing) {
+          await player.setVolume(currentVolume);
+        }
+      }
+    }
+
+    // พอเสียงเงียบสนิทแล้ว สั่ง stop และคืนค่า Volume เริ่มต้นไว้รอเปิดครั้งต่อไป
+    for (final player in _musicPads.values) {
+      if (player.playing) {
+        await player.stop();
+        await player.setVolume(musicVolume);
+      }
+    }
+  }
+
+  AudioPlayer? get activeMusicPlayer {
+    for (final player in _musicPads.values) {
+      if (player.playing) return player;
+    }
+    return null;
   }
 }

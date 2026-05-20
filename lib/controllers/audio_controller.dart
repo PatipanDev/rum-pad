@@ -1,14 +1,25 @@
+import 'dart:async';
+import 'dart:io';
+
+import 'package:flutter/services.dart';
+import 'package:just_audio/just_audio.dart';
+import 'package:just_waveform/just_waveform.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:riverpod/riverpod.dart';
 import 'package:rum_tap/provider/audio_provider.dart';
+import 'package:rum_tap/provider/audio_wave_controller.dart';
 import 'package:rum_tap/services/audio_service.dart';
+import 'package:rum_tap/services/pref_service.dart';
 import 'package:rum_tap/state/audio_state.dart';
 
 class AudioController extends Notifier<AudioState> {
   late final AudioService _audio;
+  late final PrefService _pref;
 
   @override
   AudioState build() {
     _audio = ref.read(audioServiceProvider);
+    _pref = ref.read(prefServiceProvider);
 
     return const AudioState(
       musicVolume: 0.5,
@@ -18,6 +29,11 @@ class AudioController extends Notifier<AudioState> {
 
       /// ⭐ ต้องมีค่าเริ่มต้น
       padPlaying: {},
+      fadeInDurationMs: 1500,
+      fadeOutDurationMs: 1500,
+
+      /// ⭐ default
+      currentMusicAsset: null,
     );
   }
 
@@ -29,6 +45,30 @@ class AudioController extends Notifier<AudioState> {
     });
   }
 
+  Future<void> loadPrefs() async {
+    final pref = ref.read(prefServiceProvider);
+
+    final musicVolume = await pref.getMusicVolume();
+    final sfxVolume = await pref.getSfxVolume();
+    final musicMuted = await pref.getMusicMuted();
+    final sfxMuted = await pref.getSfxMuted();
+    final fadeIn = await pref.getFadeIn();
+    final fadeOut = await pref.getFadeOut();
+
+    // apply volume ให้ audio engine ด้วย
+    _audio.setMusicVolume(musicMuted ? 0 : musicVolume);
+    _audio.setSfxVolume(sfxMuted ? 0 : sfxVolume);
+
+    state = state.copyWith(
+      musicVolume: musicVolume,
+      sfxVolume: sfxVolume,
+      musicMuted: musicMuted,
+      sfxMuted: sfxMuted,
+      fadeInDurationMs: fadeIn,
+      fadeOutDurationMs: fadeOut,
+    );
+  }
+
   Future<void> preloadPads() async {
     await _audio.preloadPads(_audio.allAssets);
   }
@@ -38,29 +78,48 @@ class AudioController extends Notifier<AudioState> {
   }
 
   // ---------- MUSIC ----------
-  Future<void> playMusic(String asset) {
-     state = state.copyWith(padPlaying: {...state.padPlaying, asset: true});
-    return _audio.playMusic(asset);
+  Future<void> playMusic(String asset) async {
+    final previous = state.currentMusicAsset;
+
+    /// ⭐ 1. ปิด UI เพลงเก่าก่อน
+    if (previous != null) {
+      state = state.copyWith(
+        padPlaying: {...state.padPlaying, previous: false},
+      );
+
+      await _audio.stopMusic(previous);
+    }
+
+    /// ⭐ 2. set เพลงใหม่ + UI true
+    state = state.copyWith(
+      currentMusicAsset: asset,
+      padPlaying: {...state.padPlaying, asset: true},
+    );
+
+    /// ⭐ 3. เล่นเพลงใหม่
+    await _audio.playMusic(asset);
   }
 
   Future<void> stopMusic(String asset) {
-     state = state.copyWith(padPlaying: {...state.padPlaying, asset: false});
+    state = state.copyWith(padPlaying: {...state.padPlaying, asset: false});
     return _audio.stopMusic(asset);
   }
 
-  void setMusicVolume(double v) {
+  void setMusicVolume(double v) async {
     _audio.setMusicVolume(v);
 
     state = state.copyWith(musicVolume: v, musicMuted: v == 0);
+    await _pref.saveMusicVolume(v);
   }
 
-  void toggleMusicMute() {
+  void toggleMusicMute() async {
     final muted = !state.musicMuted;
     final v = muted ? 0.0 : state.musicVolume;
 
     _audio.setMusicVolume(v);
 
     state = state.copyWith(musicMuted: muted);
+    await _pref.saveMusicVolume(v);
   }
 
   // ---------- SFX ----------
@@ -76,18 +135,48 @@ class AudioController extends Notifier<AudioState> {
     await _audio.stopPad(asset);
   }
 
-  void setSfxVolume(double v) {
+  void setSfxVolume(double v) async {
     _audio.setSfxVolume(v);
 
     state = state.copyWith(sfxVolume: v, sfxMuted: v == 0);
+    await _pref.saveSfxVolume(v);
   }
 
-  void toggleSfxMute() {
+  void toggleSfxMute() async {
     final muted = !state.sfxMuted;
     final v = muted ? 0.0 : state.sfxVolume;
 
     _audio.setSfxVolume(v);
 
     state = state.copyWith(sfxMuted: muted);
+    await _pref.saveSfxVolume(v);
+  }
+
+  Future<void> fadeInAllMusicVolume() async {
+    Duration duration = Duration(milliseconds: state.fadeInDurationMs);
+    await _audio.fadeInAllMusicVolume(duration: duration);
+    state = state.copyWith(musicMuted: false);
+  }
+
+  Future<void> fadeOutAllMusicVolume() async {
+    Duration duration = Duration(milliseconds: state.fadeOutDurationMs);
+    await _audio.fadeOutAllMusicVolume(duration: duration);
+    state = state.copyWith(musicMuted: true);
+  }
+
+  void setFadeInDuration(int ms) async {
+    // สั่งอัปเดตค่า fadeInDurationMs ใน State เพื่อให้ UI รับรู้และหมุนตาม
+    await _pref.saveFadeIn(ms);
+    state = state.copyWith(fadeInDurationMs: ms);
+  }
+
+  void setFadeOutDuration(int ms) async {
+    await _pref.saveFadeOut(ms);
+    // สั่งอัปเดตค่า fadeOutDurationMs ใน State
+    state = state.copyWith(fadeOutDurationMs: ms);
+  }
+
+  void dispose() {
+    _audio.dispose();
   }
 }

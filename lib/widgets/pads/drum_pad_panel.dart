@@ -17,84 +17,175 @@ class _DrumPadPanelState extends ConsumerState<DrumPadPanel> {
 
     return DefaultTabController(
       length: PadKits.kits.keys.length,
-      child: Column(
-        children: [
-          /// 🎚 TAB BAR
-          Container(
-            color: Colors.black12,
-            child: TabBar(
-              tabs: PadKits.kits.keys.map((e) => Tab(text: e)).toList(),
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.grey[900], // เปลี่ยนจากสีแดงเป็นสีมิกเซอร์เข้มๆ เท่ๆ
+          borderRadius: BorderRadius.circular(0),
+          border: Border.all(color: Colors.grey[800]!, width: 1),
+        ),
+        child: Column(
+          children: [
+            /// 🎚 TAB BAR
+            Container(
+              decoration: BoxDecoration(
+                color: Colors.black, // เปลี่ยนจากสีแดงเป็นสีมิกเซอร์เข้มๆ เท่ๆ
+                borderRadius: BorderRadius.circular(0),
+                border: Border.all(color: Colors.grey[900]!, width: 1),
+              ),
+              child: TabBar(
+                tabs: PadKits.kits.keys.map((e) => Tab(text: e)).toList(),
+                indicatorColor: Colors.white,
+                overlayColor: WidgetStateProperty.all(Colors.transparent),
+                labelColor: Colors
+                    .white, // สีของตัวอักษรบน Tab ที่ถูกเลือก (ให้ขาวชัดเจน 100%)
+                unselectedLabelColor: Colors.white38,
+              ),
             ),
-          ),
 
-          /// 🟧 PAD GRID
-          Expanded(
-            child: TabBarView(
-              children: PadKits.kits.keys.map((kitName) {
-                final pads = PadKits.kits[kitName]!;
+            /// 🟧 PAD GRID
+            Expanded(
+              child: TabBarView(
+                children: PadKits.kits.keys.map((kitName) {
+                  final pads = PadKits.kits[kitName]!;
 
-                return SingleChildScrollView(
-                  padding: const EdgeInsets.all(16),
-                  child: Wrap(
-                    spacing: 6,
-                    runSpacing: 6,
-                    children: List.generate(pads.length, (index) {
-                      final asset = pads[index];
+                  return SingleChildScrollView(
+                    padding: const EdgeInsets.all(4),
+                    child: Wrap(
+                      spacing: 4,
+                      runSpacing: 4,
+                      alignment: WrapAlignment.start,
+                      children: List.generate(pads.length, (index) {
+                        final asset = pads[index];
 
-                      /// ⭐ ใช้ watch แทน setState (สำคัญ)
-                      final isPlaying = ref.watch(
-                        audioControllerProvider.select(
-                          (s) => s.padPlaying[asset] ?? false,
-                        ),
-                      );
+                        /// ⭐ ใช้ watch แทน setState (สำคัญ)
+                        final isPlaying = ref.watch(
+                          audioControllerProvider.select(
+                            (s) => s.padPlaying[asset] ?? false,
+                          ),
+                        );
 
-                      return SizedBox(
-                        width: 75,
-                        height: 75,
-                        child: GestureDetector(
-                          onTap: () {
-                            audio.playPad(asset);
-                          },
-                          child: Container(
-                            decoration: BoxDecoration(
-                              color: Colors.orange,
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Text(
-                                  "${index + 1}",
-                                  style: const TextStyle(
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.bold,
-                                  ),
+                        return SizedBox(
+                          width: 75,
+                          height: 75,
+                          child: GestureDetector(
+                            onTap: () {
+                              audio.playPad(asset);
+                            },
+                            child: AnimatedContainer(
+                              transform: Matrix4.translationValues(
+                                0,
+                                isPlaying ? 2 : 0, // ปุ่มยุบลง
+                                0,
+                              ),
+                              duration: const Duration(milliseconds: 200),
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(10),
+
+                                // 🔥 สีปุ่ม Rubber
+                                gradient: LinearGradient(
+                                  begin: Alignment.topLeft,
+                                  end: Alignment.bottomRight,
+                                  colors: isPlaying
+                                      ? [
+                                          Colors.orangeAccent.shade400,
+                                          Colors.orange.shade700,
+                                          Colors.orange.shade900,
+                                        ]
+                                      : [
+                                          Colors.grey.shade700,
+                                          Colors.grey.shade900,
+                                        ],
                                 ),
 
-                                /// STOP BUTTON
-                                if (isPlaying)
-                                  IconButton(
-                                    padding: EdgeInsets.zero,
-                                    constraints: const BoxConstraints(),
-                                    iconSize: 28,
-                                    color: Colors.red,
-                                    icon: const Icon(Icons.stop),
-                                    onPressed: () {
-                                      audio.stopPad(asset);
-                                    },
-                                  ),
-                              ],
+                                border: Border.all(
+                                  color: isPlaying
+                                      ? Colors.orangeAccent
+                                      : Colors.black,
+                                  width: 1.4,
+                                ),
+
+                                boxShadow: isPlaying
+                                    ? [
+                                        // 🌟 ไฟเรืองรอบ pad
+                                        BoxShadow(
+                                          color: Colors.orangeAccent.withValues(
+                                            alpha: 0.9,
+                                          ),
+                                          blurRadius: 18,
+                                          spreadRadius: 3,
+                                        ),
+
+                                        // 🔽 เงากดลง
+                                        const BoxShadow(
+                                          color: Colors.black,
+                                          offset: Offset(0, 2),
+                                          blurRadius: 3,
+                                        ),
+                                      ]
+                                    : [
+                                        // 🔼 เงาปุ่มลอย
+                                        const BoxShadow(
+                                          color: Colors.black87,
+                                          offset: Offset(0, 5),
+                                          blurRadius: 6,
+                                        ),
+                                      ],
+                              ),
+
+                              child: LayoutBuilder(
+                                builder: (context, constraints) {
+                                  return Padding(
+                                    padding: const EdgeInsets.all(4.0),
+                                    child: Column(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      children: [
+                                        Icon(
+                                          Icons.music_note,
+                                          color: isPlaying
+                                              ? Colors.black
+                                              : Colors.white70,
+                                          size: 20,
+                                        ),
+                                        const SizedBox(height: 4),
+                                        if (!isPlaying) ...[
+                                          Text(
+                                            "${index + 1}",
+                                            style: TextStyle(
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: 13,
+                                              color: isPlaying
+                                                  ? Colors.black
+                                                  : Colors.white,
+                                            ),
+                                          ),
+                                        ] else ...[
+                                          const SizedBox(height: 2),
+                                          GestureDetector(
+                                            onTap: () => audio.stopPad(asset),
+                                            child: const Icon(
+                                              Icons.stop,
+                                              color: Colors.black,
+                                              size: 36,
+                                            ),
+                                          ),
+                                        ],
+                                      ],
+                                    ),
+                                  );
+                                },
+                              ),
                             ),
                           ),
-                        ),
-                      );
-                    }),
-                  ),
-                );
-              }).toList(),
+                        );
+                      }),
+                    ),
+                  );
+                }).toList(),
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

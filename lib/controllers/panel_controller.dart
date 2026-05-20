@@ -7,6 +7,7 @@ class PanelController extends Notifier<PanelState> {
     return const PanelState(
       currentPanel: AppPanel.mixer,
       isExpanded: true,
+      isLocked: false,
     );
   }
 
@@ -21,6 +22,12 @@ class PanelController extends Notifier<PanelState> {
   void toggleExpand() {
     state = state.copyWith(
       isExpanded: !state.isExpanded,
+    );
+  }
+
+  void toggleIsLocked() {
+    state = state.copyWith(
+      isLocked: !state.isLocked
     );
   }
 }

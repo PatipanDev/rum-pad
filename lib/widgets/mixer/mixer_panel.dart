@@ -13,7 +13,11 @@ class MixerPanel extends ConsumerWidget {
     final state = ref.watch(audioControllerProvider);
     final audio = ref.read(audioControllerProvider.notifier);
     return Container(
-      color: Colors.red[200],
+      decoration: BoxDecoration(
+        color: Colors.grey[900], // เปลี่ยนจากสีแดงเป็นสีมิกเซอร์เข้มๆ เท่ๆ
+        borderRadius: BorderRadius.circular(0),
+        border: Border.all(color: Colors.grey[800]!, width: 1),
+      ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
@@ -33,6 +37,7 @@ class MixerPanel extends ConsumerWidget {
             onChanged: audio.setSfxVolume,
             onMuteToggled: audio.toggleSfxMute,
           ),
+
           /// 🔘 SWITCH BUTTON (TOP LEFT)
         ],
       ),

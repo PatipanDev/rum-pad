@@ -18,125 +18,182 @@ class _MusicPadPanelState extends ConsumerState<MusicPadPanel> {
     final audio = ref.read(audioControllerProvider.notifier);
     return DefaultTabController(
       length: PadKits.kits.keys.length,
-      child: Column(
-        children: [
-          /// 🎚 TAB BAR (เลือกหมวดเพลง)
-          Container(
-            color: Colors.black12,
-            child: TabBar(
-              tabs: PadKits.kits.keys.map((e) => Tab(text: e)).toList(),
-              indicatorColor: Colors.orange,
-              overlayColor: WidgetStateProperty.all(Colors.transparent),
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.grey[900], // เปลี่ยนจากสีแดงเป็นสีมิกเซอร์เข้มๆ เท่ๆ
+          borderRadius: BorderRadius.circular(0),
+          border: Border.all(color: Colors.grey[800]!, width: 1),
+        ),
+        child: Column(
+          children: [
+            /// 🎚 TAB BAR (เลือกหมวดเพลง)
+            Container(
+              decoration: BoxDecoration(
+                color: Colors.black, // เปลี่ยนจากสีแดงเป็นสีมิกเซอร์เข้มๆ เท่ๆ
+                borderRadius: BorderRadius.circular(0),
+                border: Border.all(color: Colors.grey[900]!, width: 1),
+              ),
+              child: TabBar(
+                tabs: PadKits.kits.keys.map((e) => Tab(text: e)).toList(),
+                indicatorColor: Colors.white,
+                overlayColor: WidgetStateProperty.all(Colors.transparent),
+                labelColor: Colors
+                    .white, // สีของตัวอักษรบน Tab ที่ถูกเลือก (ให้ขาวชัดเจน 100%)
+                unselectedLabelColor: Colors.white38,
+              ),
             ),
-          ),
 
-          /// 🎵 MUSIC PAD GRID
-          Flexible(
-            child: TabBarView(
-              physics: const NeverScrollableScrollPhysics(),
-              children: PadKits.kits.keys.map((kitName) {
-                final pads = PadKits.kits[kitName]!;
+            /// 🎵 MUSIC PAD GRID
+            Flexible(
+              child: TabBarView(
+                physics: const NeverScrollableScrollPhysics(),
+                children: PadKits.kits.keys.map((kitName) {
+                  final pads = PadKits.kits[kitName]!;
 
-                return SingleChildScrollView(
-                  padding: const EdgeInsets.all(16),
-                  child: Wrap(
-                    spacing: 4, // ระยะห่างระหว่างปุ่ม (แนวนอน)
-                    runSpacing: 4, // ระยะห่างระหว่างปุ่ม (แนวตั้งเมื่อตกบรรทัด)
-                    alignment:
-                        WrapAlignment.start, // จัดให้ปุ่มเรียงจากซ้ายไปขวา
-                    children: List.generate(pads.length, (index) {
-                      final asset = pads[index];
+                  return SingleChildScrollView(
+                    padding: const EdgeInsets.all(4),
 
-                      // ดึงสถานะการเล่น (ฝั่งใครฝั่งมัน)
-                      final isPlaying = ref.watch(
-                        audioControllerProvider.select(
-                          (s) => s.padPlaying[asset] ?? false,
-                        ),
-                      ); // ถ้าฝั่งเอฟเฟคให้เปลี่ยนเป็น audio.isPadPlaying(asset)
+                    child: Wrap(
+                      spacing: 4, // ระยะห่างระหว่างปุ่ม (แนวนอน)
+                      runSpacing:
+                          4, // ระยะห่างระหว่างปุ่ม (แนวตั้งเมื่อตกบรรทัด)
+                      alignment:
+                          WrapAlignment.start, // จัดให้ปุ่มเรียงจากซ้ายไปขวา
+                      children: List.generate(pads.length, (index) {
+                        final asset = pads[index];
 
-                      // 2. ใช้ SizedBox ล็อกขนาดปุ่มตรงนี้ให้เท่ากันทั้ง 2 ไฟล์! 👇
-                      return SizedBox(
-                        width:
-                            75, // 👈 ตั้งขนาดที่อยากได้เลยครับ เช่น 75 พิกเซลเท่ากันทั้ง 2 แผง
-                        height: 75, // 👈 ความสูง 75 พิกเซลเท่ากัน
-                        child: GestureDetector(
-                          onTap: () {
-                            audio.playMusic(asset);
-                          },
-                          child: AnimatedContainer(
-                            duration: const Duration(milliseconds: 200),
-                            decoration: BoxDecoration(
-                              color: isPlaying ? Colors.green : Colors.blueGrey,
-                              borderRadius: BorderRadius.circular(14),
-                              boxShadow: isPlaying
-                                  ? [
-                                      const BoxShadow(
-                                        color: Colors.greenAccent,
-                                        blurRadius: 15,
-                                        spreadRadius: 2,
-                                      ),
-                                    ]
-                                  : [],
-                            ),
+                        // ดึงสถานะการเล่น (ฝั่งใครฝั่งมัน)
+                        final isPlaying = ref.watch(
+                          audioControllerProvider.select(
+                            (s) => s.padPlaying[asset] ?? false,
+                          ),
+                        ); // ถ้าฝั่งเอฟเฟคให้เปลี่ยนเป็น audio.isPadPlaying(asset)
 
-                            // 3. ใช้ LayoutBuilder และ Column ข้างในปุ่มตามสูตรเดิม เพื่อความปลอดภัย
-                            child: LayoutBuilder(
-                              builder: (context, constraints) {
-                                return Padding(
-                                  padding: const EdgeInsets.all(4.0),
-                                  child: Column(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      Flexible(
-                                        child: FittedBox(
-                                          fit: BoxFit.scaleDown,
-                                          child: Text(
-                                            "TRACK ${index + 1}", // ถ้าฝั่งเอฟเฟคอาจจะเปลี่ยนชื่อเป็น "SFX ${index + 1}"
-                                            style: const TextStyle(
-                                              fontSize: 14,
-                                              fontWeight: FontWeight.bold,
-                                              color: Colors.white,
-                                            ),
+                        // 2. ใช้ SizedBox ล็อกขนาดปุ่มตรงนี้ให้เท่ากันทั้ง 2 ไฟล์! 👇
+                        return SizedBox(
+                          width:
+                              75, // 👈 ตั้งขนาดที่อยากได้เลยครับ เช่น 75 พิกเซลเท่ากันทั้ง 2 แผง
+                          height: 75, // 👈 ความสูง 75 พิกเซลเท่ากัน
+                          child: GestureDetector(
+                            onTap: () {
+                              audio.playMusic(asset);
+                            },
+                            child: AnimatedContainer(
+                              transform: Matrix4.translationValues(
+                                0,
+                                isPlaying ? 2 : 0, // ปุ่มยุบลง
+                                0,
+                              ),
+                              duration: const Duration(milliseconds: 200),
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(10),
+
+                                // 🔥 สีปุ่ม Rubber
+                                gradient: LinearGradient(
+                                  begin: Alignment.topLeft,
+                                  end: Alignment.bottomRight,
+                                  colors: isPlaying
+                                      ? [
+                                          Colors.greenAccent.shade400,
+                                          Colors.green.shade700,
+                                          Colors.green.shade900,
+                                        ]
+                                      : [
+                                          Colors.grey.shade700,
+                                          Colors.grey.shade900,
+                                        ],
+                                ),
+
+                                border: Border.all(
+                                  color: isPlaying
+                                      ? Colors.greenAccent
+                                      : Colors.black,
+                                  width: 1.4,
+                                ),
+
+                                boxShadow: isPlaying
+                                    ? [
+                                        // 🌟 ไฟเรืองรอบ pad
+                                        BoxShadow(
+                                          color: Colors.greenAccent.withValues(
+                                            alpha: 0.9,
                                           ),
+                                          blurRadius: 18,
+                                          spreadRadius: 3,
                                         ),
-                                      ),
-                                      if (isPlaying) ...[
-                                        const SizedBox(height: 4),
-                                        Flexible(
-                                          child: FittedBox(
-                                            fit: BoxFit.scaleDown,
-                                            child: IconButton(
-                                              iconSize:
-                                                  constraints.maxHeight * 0.4,
-                                              padding: EdgeInsets.zero,
-                                              constraints:
-                                                  const BoxConstraints(),
-                                              color: Colors.redAccent,
-                                              icon: const Icon(
-                                                Icons.stop_circle,
-                                              ),
-                                              onPressed: () async {
-                                                audio.stopMusic(asset);
-                                              },
-                                            ),
-                                          ),
+
+                                        // 🔽 เงากดลง
+                                        const BoxShadow(
+                                          color: Colors.black,
+                                          offset: Offset(0, 2),
+                                          blurRadius: 3,
+                                        ),
+                                      ]
+                                    : [
+                                        // 🔼 เงาปุ่มลอย
+                                        const BoxShadow(
+                                          color: Colors.black87,
+                                          offset: Offset(0, 5),
+                                          blurRadius: 6,
                                         ),
                                       ],
-                                    ],
-                                  ),
-                                );
-                              },
+                              ),
+
+                              // 3. ใช้ LayoutBuilder และ Column ข้างในปุ่มตามสูตรเดิม เพื่อความปลอดภัย
+                              child: LayoutBuilder(
+                                builder: (context, constraints) {
+                                  return Padding(
+                                    padding: const EdgeInsets.all(4.0),
+                                    child: Column(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      children: [
+                                        Icon(
+                                          Icons.music_note,
+                                          color: isPlaying
+                                              ? Colors.black
+                                              : Colors.white70,
+                                          size: 20,
+                                        ),
+                                        const SizedBox(height: 4),
+                                        if (!isPlaying) ...[
+                                          Text(
+                                            "${index + 1}",
+                                            style: TextStyle(
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: 13,
+                                              color: isPlaying
+                                                  ? Colors.black
+                                                  : Colors.white,
+                                            ),
+                                          ),
+                                        ] else ...[
+                                          const SizedBox(height: 2),
+                                          GestureDetector(
+                                            onTap: () => audio.stopMusic(asset),
+                                            child: const Icon(
+                                              Icons.stop,
+                                              color: Colors.black,
+                                              size: 36,
+                                            ),
+                                          ),
+                                        ],
+                                      ],
+                                    ),
+                                  );
+                                },
+                              ),
                             ),
                           ),
-                        ),
-                      );
-                    }),
-                  ),
-                );
-              }).toList(),
+                        );
+                      }),
+                    ),
+                  );
+                }).toList(),
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

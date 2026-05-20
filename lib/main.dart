@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:rum_tap/provider/audio_provider.dart';
+import 'package:rum_tap/provider/panel_provider.dart';
 import 'package:rum_tap/widgets/pads/drum_pad_panel.dart';
 import 'package:rum_tap/widgets/mixer/mixer_panel.dart';
 import 'package:rum_tap/widgets/pads/music_pad_panel.dart';
 import 'package:rum_tap/widgets/panel/mixer_and_fade_panel.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'l10n/app_localizations.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -79,29 +81,67 @@ class MyApp extends StatelessWidget {
         Locale('en'), // English
         Locale('es'), // Spanish
       ],
-      theme: ThemeData(colorScheme: .fromSeed(seedColor: Colors.deepPurple)),
-      home: const MyHomePage(title: 'Flutter Demo Home Page'),
+      theme: ThemeData(colorScheme: .fromSeed(seedColor: Colors.white)),
+      home: const MyHomePage(title: 'Rum pad'),
     );
   }
 }
 
-class MyHomePage extends StatefulWidget {
+class MyHomePage extends ConsumerWidget {
   const MyHomePage({super.key, required this.title});
   final String title;
 
   @override
-  State<MyHomePage> createState() => _MyHomePageState();
-}
+  Widget build(BuildContext context, WidgetRef ref) {
+    String currentKit = "HIPHOP";
 
-class _MyHomePageState extends State<MyHomePage> {
-  String currentKit = "HIPHOP";
-
-  @override
-  Widget build(BuildContext context) {
+    final panel = ref.watch(panelControllerProvider);
+    final controller = ref.watch(panelControllerProvider.notifier);
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        title: Text(widget.title),
+        toolbarHeight: 48,
+        elevation: 0,
+        backgroundColor: Colors.transparent,
+
+        flexibleSpace: Container(
+          decoration: BoxDecoration(
+            color: Colors.black,
+            border: Border.all(color: Colors.grey[900]!, width: 1),
+          ),
+
+          child: SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8),
+              child: Row(
+                children: [
+                  /// 🎧 TITLE (ชิดซ้าย)
+                  Text(
+                    title,
+                    style: const TextStyle(
+                      fontSize: 26,
+                      color: Colors.white,
+                      fontWeight: FontWeight.w600,
+                      letterSpacing: 1.2,
+                    ),
+                  ),
+
+                  const Spacer(),
+
+                  /// 🔒 LOCK (ชิดขวา)
+                  IconButton(
+                    onPressed: () {
+                      controller.toggleIsLocked();
+                    },
+                    icon: Icon(
+                      panel.isLocked ? Icons.lock : Icons.lock_open,
+                      color: panel.isLocked ? Colors.redAccent : Colors.white,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
       ),
       body: Center(
         child: Row(

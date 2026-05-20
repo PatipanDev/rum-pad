@@ -22,22 +22,33 @@ class MixerAndFadePanel extends ConsumerWidget {
         children: [
           /// 🔝 TOP BAR (กินพื้นที่จริง)
           Container(
-            height: 32,
-            padding: const EdgeInsets.symmetric(horizontal: 12),
-            color: Colors.black12,
+            height: 48,
+            padding: const EdgeInsets.symmetric(horizontal: 4),
+            decoration: BoxDecoration(
+              color: Colors.black, // เปลี่ยนจากสีแดงเป็นสีมิกเซอร์เข้มๆ เท่ๆ
+              borderRadius: BorderRadius.circular(0),
+              border: Border.all(color: Colors.grey[900]!, width: 1),
+            ),
             child: Row(
               children: [
                 /// 🔘 switch button
                 IconButton(
                   onPressed: controller.togglePanel,
                   icon: const Icon(Icons.swap_horiz),
+                  style: IconButton.styleFrom(
+                    // backgroundColor: Colors.white, // สีพื้นปุ่ม
+                    foregroundColor: Colors.white, // สี icon
+                  ),
                 ),
 
-                const SizedBox(width: 8),
+                const SizedBox(width: 4),
 
                 Text(
                   panel.currentPanel.name.toUpperCase(),
-                  style: const TextStyle(fontWeight: FontWeight.bold),
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
                 ),
               ],
             ),

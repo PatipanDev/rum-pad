@@ -1,0 +1,10 @@
+{
+  "@@locale": "ko",
+  "nameApp": "럼 패드",
+  "music": "음악",
+  "sfx": "효과음",
+  "mixer": "믹서",
+  "fade": "페이드",
+  "fadeIn": "페이드 인",
+  "fadeOut": "페이드 아웃"
+}

@@ -1,0 +1,10 @@
+{
+  "@@locale": "zh",
+  "nameApp": "Rum 打击垫",
+  "music": "音乐",
+  "sfx": "音效",
+  "mixer": "混音器",
+  "fade": "淡出",
+  "fadeIn": "淡入",
+  "fadeOut": "淡出结束"
+}

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:rum_tap/controllers/audio_controller.dart';
 import 'package:rum_tap/core/audio/audio_manager.dart';
+import 'package:rum_tap/l10n/app_localizations.dart';
 import 'package:rum_tap/provider/audio_provider.dart';
 import 'package:rum_tap/widgets/mixer/mixer_slider.dart';
 
@@ -12,6 +13,8 @@ class MixerPanel extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(audioControllerProvider);
     final audio = ref.read(audioControllerProvider.notifier);
+    final t = AppLocalizations.of(context)!;
+
     return Container(
       decoration: BoxDecoration(
         color: Colors.grey[900], // เปลี่ยนจากสีแดงเป็นสีมิกเซอร์เข้มๆ เท่ๆ
@@ -23,7 +26,7 @@ class MixerPanel extends ConsumerWidget {
         children: [
           /// 🎵 MUSIC SLIDER
           MixerSlider(
-            title: "Music",
+            title: t.music,
             value: state.musicVolume,
             isMuted: state.musicMuted,
             onChanged: audio.setMusicVolume,
@@ -31,7 +34,7 @@ class MixerPanel extends ConsumerWidget {
           ),
 
           MixerSlider(
-            title: "SFX",
+            title: t.sfx,
             value: state.sfxVolume,
             isMuted: state.sfxMuted,
             onChanged: audio.setSfxVolume,

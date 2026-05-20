@@ -48,3 +48,6 @@ flutter run -d android
 
 ## รัน Riverpod
 dart run build_runner watch
+
+## รัน gen แปลภาษา
+flutter gen-l10n

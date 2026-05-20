@@ -1,0 +1,10 @@
+{
+  "@@locale": "id",
+  "nameApp": "Rum Pad",
+  "music": "Musik",
+  "sfx": "Efek suara",
+  "mixer": "Mixer",
+  "fade": "Fade",
+  "fadeIn": "Fade masuk",
+  "fadeOut": "Fade keluar"
+}

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:rum_tap/controllers/audio_controller.dart';
 import 'package:rum_tap/core/audio/audio_manager.dart';
+import 'package:rum_tap/l10n/app_localizations.dart';
 import 'package:rum_tap/provider/audio_provider.dart';
 import 'package:rum_tap/widgets/mixer/mixer_slider.dart';
 import 'dart:math' as math;
@@ -19,6 +20,8 @@ class FadePanel extends ConsumerWidget {
     final double fadeInSec = (state.fadeInDurationMs ?? 1500) / 1000;
     final double fadeOutSec = (state.fadeOutDurationMs ?? 1500) / 1000;
     final bool isFading = state.isFading ?? false;
+
+    final t = AppLocalizations.of(context)!;
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
       decoration: BoxDecoration(
@@ -34,8 +37,8 @@ class FadePanel extends ConsumerWidget {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Text(
-                  'FADE IN',
+                Text(
+                  t.fadeIn,
                   style: TextStyle(
                     color: Colors.greenAccent,
                     fontWeight: FontWeight.bold,
@@ -71,8 +74,8 @@ class FadePanel extends ConsumerWidget {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Text(
-                  'FADE OUT',
+                Text(
+                  t.fadeOut,
                   style: TextStyle(
                     color: Colors.orangeAccent,
                     fontWeight: FontWeight.bold,
@@ -312,5 +315,3 @@ class _MixerTriggerButtonState extends State<MixerTriggerButton>
     );
   }
 }
-
-

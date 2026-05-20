@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:rum_tap/features/Info/page.dart';
 import 'package:rum_tap/provider/audio_provider.dart';
+import 'package:rum_tap/provider/locale_provider.dart';
 import 'package:rum_tap/provider/panel_provider.dart';
 import 'package:rum_tap/widgets/pads/drum_pad_panel.dart';
 import 'package:rum_tap/widgets/mixer/mixer_panel.dart';
@@ -63,37 +65,57 @@ class _AppBootstrapState extends ConsumerState<AppBootstrap> {
   }
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends ConsumerWidget {
   const MyApp({super.key});
 
   // This widget is the root of your application.
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final locale = ref.watch(localeProvider);
     return MaterialApp(
-      title: 'Flutter Demo',
+      title: 'Rum pad',
+      locale: locale,
       localizationsDelegates: [
         AppLocalizations.delegate,
         GlobalMaterialLocalizations.delegate,
         GlobalWidgetsLocalizations.delegate,
         GlobalCupertinoLocalizations.delegate,
       ],
-      supportedLocales: [
-        Locale('en'), // English
-        Locale('es'), // Spanish
+      localeResolutionCallback: (locale, supportedLocales) {
+        if (locale == null) return supportedLocales.first;
+
+        for (var supported in supportedLocales) {
+          if (supported.languageCode == locale.languageCode) {
+            return supported;
+          }
+        }
+
+        return supportedLocales.first;
+      },
+      supportedLocales: const [
+        Locale('en'),
+        Locale('th'),
+        Locale('lo'), // ลาว
+        Locale('my'), // พม่า
+        Locale('zh'), // จีน
+        Locale('ko'), // เกาหลี
+        Locale('ja'), // ญี่ปุ่น
+        Locale('ms'), // มาเลเซีย
+        Locale('pt'), // โปรตุเกส
+        Locale('id'), // อินโดนีเซีย
       ],
       theme: ThemeData(colorScheme: .fromSeed(seedColor: Colors.white)),
-      home: const MyHomePage(title: 'Rum pad'),
+      home: const MyHomePage(),
     );
   }
 }
 
 class MyHomePage extends ConsumerWidget {
-  const MyHomePage({super.key, required this.title});
-  final String title;
+  const MyHomePage({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    String currentKit = "HIPHOP";
+    final t = AppLocalizations.of(context)!;
 
     final panel = ref.watch(panelControllerProvider);
     final controller = ref.watch(panelControllerProvider.notifier);
@@ -111,17 +133,30 @@ class MyHomePage extends ConsumerWidget {
 
           child: SafeArea(
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 4),
               child: Row(
                 children: [
                   /// 🎧 TITLE (ชิดซ้าย)
-                  Text(
-                    title,
-                    style: const TextStyle(
-                      fontSize: 26,
-                      color: Colors.white,
-                      fontWeight: FontWeight.w600,
-                      letterSpacing: 1.2,
+                  ShaderMask(
+                    shaderCallback: (bounds) {
+                      return const LinearGradient(
+                        colors: [
+                          Color(0xFFFFD700), // gold สว่าง
+                          Color(0xFFFFA000), // amber
+                          Color(0xFF8B6508), // gold เข้ม
+                        ],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ).createShader(bounds);
+                    },
+                    child: Text(
+                      t.nameApp,
+                      style: const TextStyle(
+                        fontSize: 26,
+                        color: Colors.white, // ต้องใส่ไว้ แต่จะถูก mask ทับ
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 1.2,
+                      ),
                     ),
                   ),
 
@@ -136,6 +171,76 @@ class MyHomePage extends ConsumerWidget {
                       panel.isLocked ? Icons.lock : Icons.lock_open,
                       color: panel.isLocked ? Colors.redAccent : Colors.white,
                     ),
+                  ),
+
+                  DropdownButton<Locale>(
+                    value: ref.watch(localeProvider),
+                    dropdownColor: Colors.black,
+                    style: const TextStyle(color: Colors.white),
+
+                    items: const [
+                      DropdownMenuItem(
+                        value: Locale('en'),
+                        child: Text("English"),
+                      ),
+                      DropdownMenuItem(value: Locale('th'), child: Text("ไทย")),
+                      DropdownMenuItem(value: Locale('lo'), child: Text("ລາວ")),
+                      DropdownMenuItem(
+                        value: Locale('my'),
+                        child: Text("မြန်မာ"),
+                      ),
+                      DropdownMenuItem(value: Locale('zh'), child: Text("中文")),
+                      DropdownMenuItem(value: Locale('ko'), child: Text("한국어")),
+                      DropdownMenuItem(value: Locale('ja'), child: Text("日本語")),
+                      DropdownMenuItem(
+                        value: Locale('ms'),
+                        child: Text("Bahasa Melayu"),
+                      ),
+                      DropdownMenuItem(
+                        value: Locale('pt'),
+                        child: Text("Português"),
+                      ),
+                      DropdownMenuItem(
+                        value: Locale('id'),
+                        child: Text("Indonesia"),
+                      ),
+                    ],
+
+                    onChanged: (value) {
+                      if (value == null) return;
+                      ref.read(localeProvider.notifier).state = value;
+                    },
+                  ),
+
+                  IconButton(
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        PageRouteBuilder(
+                          pageBuilder:
+                              (context, animation, secondaryAnimation) =>
+                                  const AppInfoPage(),
+
+                          transitionsBuilder:
+                              (context, animation, secondaryAnimation, child) {
+                                const begin = Offset(1.0, 0.0); // มาจากขวา
+                                const end = Offset.zero;
+                                const curve = Curves.easeOutCubic;
+
+                                final tween = Tween(
+                                  begin: begin,
+                                  end: end,
+                                ).chain(CurveTween(curve: curve));
+
+                                return SlideTransition(
+                                  position: animation.drive(tween),
+                                  child: child,
+                                );
+                              },
+                        ),
+                      );
+                    },
+                    icon: Icon(Icons.info),
                   ),
                 ],
               ),

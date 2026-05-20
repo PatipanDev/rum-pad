@@ -6,6 +6,15 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:intl/intl.dart' as intl;
 
 import 'app_localizations_en.dart';
+import 'app_localizations_id.dart';
+import 'app_localizations_ja.dart';
+import 'app_localizations_ko.dart';
+import 'app_localizations_lo.dart';
+import 'app_localizations_ms.dart';
+import 'app_localizations_my.dart';
+import 'app_localizations_pt.dart';
+import 'app_localizations_th.dart';
+import 'app_localizations_zh.dart';
 
 // ignore_for_file: type=lint
 
@@ -92,19 +101,60 @@ abstract class AppLocalizations {
       ];
 
   /// A list of this localizations delegate's supported locales.
-  static const List<Locale> supportedLocales = <Locale>[Locale('en')];
+  static const List<Locale> supportedLocales = <Locale>[
+    Locale('en'),
+    Locale('id'),
+    Locale('ja'),
+    Locale('ko'),
+    Locale('lo'),
+    Locale('ms'),
+    Locale('my'),
+    Locale('pt'),
+    Locale('th'),
+    Locale('zh'),
+  ];
 
-  /// No description provided for @hello.
-  ///
-  /// In en, this message translates to:
-  /// **'Hello'**
-  String get hello;
-
-  /// No description provided for @title.
+  /// No description provided for @nameApp.
   ///
   /// In en, this message translates to:
   /// **'Rum Pad'**
-  String get title;
+  String get nameApp;
+
+  /// No description provided for @music.
+  ///
+  /// In en, this message translates to:
+  /// **'MUSIC'**
+  String get music;
+
+  /// No description provided for @sfx.
+  ///
+  /// In en, this message translates to:
+  /// **'SFX'**
+  String get sfx;
+
+  /// No description provided for @mixer.
+  ///
+  /// In en, this message translates to:
+  /// **'MIXER'**
+  String get mixer;
+
+  /// No description provided for @fade.
+  ///
+  /// In en, this message translates to:
+  /// **'FADE'**
+  String get fade;
+
+  /// No description provided for @fadeIn.
+  ///
+  /// In en, this message translates to:
+  /// **'FADE IN'**
+  String get fadeIn;
+
+  /// No description provided for @fadeOut.
+  ///
+  /// In en, this message translates to:
+  /// **'FADE OUT'**
+  String get fadeOut;
 }
 
 class _AppLocalizationsDelegate
@@ -117,8 +167,18 @@ class _AppLocalizationsDelegate
   }
 
   @override
-  bool isSupported(Locale locale) =>
-      <String>['en'].contains(locale.languageCode);
+  bool isSupported(Locale locale) => <String>[
+    'en',
+    'id',
+    'ja',
+    'ko',
+    'lo',
+    'ms',
+    'my',
+    'pt',
+    'th',
+    'zh',
+  ].contains(locale.languageCode);
 
   @override
   bool shouldReload(_AppLocalizationsDelegate old) => false;
@@ -129,6 +189,24 @@ AppLocalizations lookupAppLocalizations(Locale locale) {
   switch (locale.languageCode) {
     case 'en':
       return AppLocalizationsEn();
+    case 'id':
+      return AppLocalizationsId();
+    case 'ja':
+      return AppLocalizationsJa();
+    case 'ko':
+      return AppLocalizationsKo();
+    case 'lo':
+      return AppLocalizationsLo();
+    case 'ms':
+      return AppLocalizationsMs();
+    case 'my':
+      return AppLocalizationsMy();
+    case 'pt':
+      return AppLocalizationsPt();
+    case 'th':
+      return AppLocalizationsTh();
+    case 'zh':
+      return AppLocalizationsZh();
   }
 
   throw FlutterError(

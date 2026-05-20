@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:rum_tap/controllers/audio_controller.dart';
 import 'package:rum_tap/core/audio/audio_manager.dart';
+import 'package:rum_tap/l10n/app_localizations.dart';
 import 'package:rum_tap/provider/audio_provider.dart';
 import 'package:rum_tap/provider/panel_provider.dart';
 import 'package:rum_tap/state/panel_state.dart';
@@ -16,6 +17,7 @@ class MixerAndFadePanel extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final panel = ref.watch(panelControllerProvider);
     final controller = ref.read(panelControllerProvider.notifier);
+    final t = AppLocalizations.of(context)!;
 
     return Scaffold(
       body: Column(
@@ -44,7 +46,7 @@ class MixerAndFadePanel extends ConsumerWidget {
                 const SizedBox(width: 4),
 
                 Text(
-                  panel.currentPanel.name.toUpperCase(),
+                  panel.currentPanel == AppPanel.mixer ? t.mixer : t.fade,
                   style: const TextStyle(
                     fontWeight: FontWeight.bold,
                     color: Colors.white,

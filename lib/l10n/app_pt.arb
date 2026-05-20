@@ -1,0 +1,10 @@
+{
+  "@@locale": "pt",
+  "nameApp": "Rum Pad",
+  "music": "Música",
+  "sfx": "SFX",
+  "mixer": "Mixer",
+  "fade": "Fade",
+  "fadeIn": "Fade In",
+  "fadeOut": "Fade Out"
+}

@@ -17,9 +17,19 @@ class AudioService {
   bool _padsPreloaded = false;
   static const int _playersPerSound = 4;
 
-  List<String> get allAssets => PadKits.kits.values.expand((e) => e).toList();
-  List<String> get allMusicAssets =>
-      PadKits.kits.values.expand((e) => e).toList();
+  List<String> get allAssets => PadKitsMusic.kits
+      .expand(
+        (kit) => kit.audioSamples,
+      ) // ยุบรวมให้เหลือ List ของ AudioSample ทุกตัว
+      .map((sample) => sample.path) // ดึงเอาเฉพาะ Path ของไฟล์เสียงออกมา
+      .toList();
+
+  List<String> get allMusicAssets => PadKitsMusic.kits
+      .expand(
+        (kit) => kit.audioSamples,
+      ) // ยุบรวมให้เหลือ List ของ AudioSample ทุกตัว
+      .map((sample) => sample.path) // ดึงเอาเฉพาะ Path ของไฟล์เสียงออกมา
+      .toList();
 
   void Function(String asset)? _onPadFinished;
   void Function(String asset)? _onMusicPadFinished;
@@ -225,37 +235,6 @@ class AudioService {
         p.dispose();
       }
     }
-  }
-
-  Future<void> _fadePlayer({
-    required AudioPlayer player,
-    required double fromVolume,
-    required double toVolume,
-    Duration duration = const Duration(
-      milliseconds: 1500,
-    ), // เวลาในการ Fade (ค่าเริ่มต้น 1.5 วินาที)
-  }) async {
-    final int steps = 30; // จำนวนขั้นในการซอยปรับระดับเสียง ยิ่งเยอะยิ่งเนียน
-    final Duration interval = duration ~/ steps; // เวลาที่รอในแต่ละขั้น
-    final double volumeStep = (toVolume - fromVolume) / steps;
-
-    double currentVolume = fromVolume;
-    await player.setVolume(currentVolume);
-
-    for (int i = 0; i < steps; i++) {
-      await Future.delayed(interval);
-
-      // ตรวจสอบเผื่อกรณีผู้ใช้สั่งหยุดหรือกดข้ามกระทันหันจนเครื่องเล่นปิดไปแล้ว
-      if (!player.playing && toVolume < fromVolume) break;
-
-      currentVolume += volumeStep;
-      // ล็อคขอบเขตเสียงไม่ให้เกิน 0.0 - 1.0
-      currentVolume = currentVolume.clamp(0.0, 1.0);
-      await player.setVolume(currentVolume);
-    }
-
-    // บังคับให้เสียงจบที่เป้าหมายอย่างแม่นยำ
-    await player.setVolume(toVolume);
   }
 
   // 1. ฟังก์ชันเปิดเพลงพร้อม Fade In

@@ -54,3 +54,10 @@ flutter gen-l10n
 
 ## รัน สร้าง icon
  flutter pub run flutter_launcher_icons
+
+## 3. สั่งสร้างหน้าจอ Splash Screen (พื้นหลังดำ)
+dart run flutter_native_splash:create
+flutter pub run flutter_native_splash:create
+
+## build app ลง playstore
+flutter build appbundle

@@ -1,13 +1,7 @@
 import 'dart:async';
-import 'dart:io';
 
-import 'package:flutter/services.dart';
-import 'package:just_audio/just_audio.dart';
-import 'package:just_waveform/just_waveform.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:riverpod/riverpod.dart';
 import 'package:rum_tap/provider/audio_provider.dart';
-import 'package:rum_tap/provider/audio_wave_controller.dart';
 import 'package:rum_tap/services/audio_service.dart';
 import 'package:rum_tap/services/pref_service.dart';
 import 'package:rum_tap/state/audio_state.dart';
@@ -99,6 +93,39 @@ class AudioController extends Notifier<AudioState> {
     /// ⭐ 3. เล่นเพลงใหม่
     await _audio.playMusic(asset);
   }
+
+  // Future<void> playMusic(String asset) async {
+  //   final previous = state.currentMusicAsset;
+
+  //   /// ⭐ 1. ปิด UI เพลงเก่าก่อน
+  //   if (previous != null) {
+  //     state = state.copyWith(
+  //       padPlaying: {...state.padPlaying, previous: false},
+  //     );
+
+  //     await _audio.stopMusic(previous);
+  //   }
+
+  //   /// ⭐ 2. set เพลงใหม่ + UI true (เพื่อให้ปุ่มแสดงสถานะกำลังโหลด/กำลังเล่นทันที)
+  //   state = state.copyWith(
+  //     currentMusicAsset: asset,
+  //     padPlaying: {...state.padPlaying, asset: true},
+  //   );
+
+  //   /// ⭐ 3. โหลดและเล่นเพลงใหม่แบบทันท่วงที (Lazy Loading)
+  //   try {
+  //     // 💡 สั่ง preload เฉพาะไฟล์ที่จะเล่น ณ วินาทีก่อนเล่นจริง
+  //     // (ส่วนใหญ่แพลตฟอร์มเสียงจะใช้เวลาตรงนี้เพียงเสี้ยววินาที ไม่ทำให้แอปค้าง)
+  //     await _audio.preloadMusicPads([asset]);
+
+  //     // เล่นเพลงทันทีหลังจากโหลดเสร็จ
+  //     await _audio.playMusic(asset);
+  //   } catch (e) {
+  //     // ระบบป้องกัน: เผื่อเกิดข้อผิดพลาดในการโหลดไฟล์ จะได้คืนค่า UI ไม่ให้ปุ่มค้าง
+  //     state = state.copyWith(padPlaying: {...state.padPlaying, asset: false});
+  //     print("Error loading audio: $e");
+  //   }
+  // }
 
   Future<void> stopMusic(String asset) {
     state = state.copyWith(padPlaying: {...state.padPlaying, asset: false});

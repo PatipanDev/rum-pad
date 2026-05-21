@@ -1,4 +1,3 @@
-import 'package:flutter_audio_waveforms/flutter_audio_waveforms.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:rum_tap/controllers/audio_controller.dart';
 import 'package:rum_tap/provider/audio_provider.dart';

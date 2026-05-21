@@ -6,10 +6,8 @@ import 'package:rum_tap/provider/audio_provider.dart';
 import 'package:rum_tap/provider/locale_provider.dart';
 import 'package:rum_tap/provider/panel_provider.dart';
 import 'package:rum_tap/widgets/pads/drum_pad_panel.dart';
-import 'package:rum_tap/widgets/mixer/mixer_panel.dart';
 import 'package:rum_tap/widgets/pads/music_pad_panel.dart';
 import 'package:rum_tap/widgets/panel/mixer_and_fade_panel.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'l10n/app_localizations.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -142,8 +140,9 @@ class MyHomePage extends ConsumerWidget {
                       child: Image.asset(
                         'assets/images/app_icon_foreground.png',
                         // 👈 ใส่ที่อยู่รูปโลโก้แอปของคุณที่นี่
-
-                        fit: BoxFit.contain,
+                        width: 32,
+                        height: 32,
+                        // fit: BoxFit.contain,
                         errorBuilder: (context, error, stackTrace) {
                           // กรณีที่ยังไม่ได้เซ็ตอัพรูปภาพ หรือหาไฟล์ไม่เจอ จะแสดง Icon ดนตรีเริ่มต้นทดแทน เพื่อไม่ให้แอปแครช
                           return const Icon(

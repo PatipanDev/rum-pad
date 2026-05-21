@@ -59,7 +59,7 @@ class _DrumPadPanelState extends ConsumerState<DrumPadPanel> {
                       child: Wrap(
                         spacing: 4,
                         runSpacing: 4,
-                        alignment: WrapAlignment.start,
+                        alignment: WrapAlignment.center,
                         children: List.generate(pads.length, (index) {
                           final asset = pads[index];
 

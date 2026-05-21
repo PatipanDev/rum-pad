@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:rum_tap/features/Info/page.dart';
+import 'package:rum_tap/features/app_splash_screen/page.dart';
 import 'package:rum_tap/provider/audio_provider.dart';
 import 'package:rum_tap/provider/locale_provider.dart';
 import 'package:rum_tap/provider/panel_provider.dart';
@@ -25,7 +26,6 @@ void main() async {
   runApp(const ProviderScope(child: AppBootstrap()));
 }
 
-/////
 class AppBootstrap extends ConsumerStatefulWidget {
   const AppBootstrap({super.key});
 
@@ -56,9 +56,7 @@ class _AppBootstrapState extends ConsumerState<AppBootstrap> {
   @override
   Widget build(BuildContext context) {
     if (!_ready) {
-      return const MaterialApp(
-        home: Scaffold(body: Center(child: CircularProgressIndicator())),
-      );
+      return const AppSplashScreen();
     }
 
     return const MyApp();
@@ -136,7 +134,29 @@ class MyHomePage extends ConsumerWidget {
               padding: const EdgeInsets.symmetric(horizontal: 4),
               child: Row(
                 children: [
-                  /// 🎧 TITLE (ชิดซ้าย)
+                  /// Lodo (ชิดซ้าย)
+                  Container(
+                    padding: const EdgeInsets.all(4),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(0),
+                      child: Image.asset(
+                        'assets/images/app_icon_foreground.png',
+                        // 👈 ใส่ที่อยู่รูปโลโก้แอปของคุณที่นี่
+
+                        fit: BoxFit.contain,
+                        errorBuilder: (context, error, stackTrace) {
+                          // กรณีที่ยังไม่ได้เซ็ตอัพรูปภาพ หรือหาไฟล์ไม่เจอ จะแสดง Icon ดนตรีเริ่มต้นทดแทน เพื่อไม่ให้แอปแครช
+                          return const Icon(
+                            Icons
+                                .music_note_rounded, // 👈 เปลี่ยนเป็นไอคอนอื่นตามธีมแอปได้ครับ
+                            size: 56,
+                            color: Colors.white,
+                          );
+                        },
+                      ),
+                    ),
+                  ),
+
                   ShaderMask(
                     shaderCallback: (bounds) {
                       return const LinearGradient(

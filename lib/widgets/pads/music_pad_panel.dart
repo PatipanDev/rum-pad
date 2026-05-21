@@ -62,7 +62,7 @@ class _MusicPadPanelState extends ConsumerState<MusicPadPanel> {
                         runSpacing:
                             4, // ระยะห่างระหว่างปุ่ม (แนวตั้งเมื่อตกบรรทัด)
                         alignment:
-                            WrapAlignment.start, // จัดให้ปุ่มเรียงจากซ้ายไปขวา
+                           WrapAlignment.center, // จัดให้ปุ่มเรียงจากซ้ายไปขวา
                         children: List.generate(pads.length, (index) {
                           final asset = pads[index];
 

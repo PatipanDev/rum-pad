@@ -51,3 +51,6 @@ dart run build_runner watch
 
 ## รัน gen แปลภาษา
 flutter gen-l10n
+
+## รัน สร้าง icon
+ flutter pub run flutter_launcher_icons

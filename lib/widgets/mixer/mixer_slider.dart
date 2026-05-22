@@ -37,94 +37,96 @@ class MixerSlider extends StatelessWidget {
         const SizedBox(height: 12),
 
         /// FADER TRACK + SLIDER
-        SizedBox(
-          height: 150,
-          child: Stack(
-            alignment: Alignment.center,
-            children: [
-              /// รางเหล็กของ Fader
-              ///
-              const Positioned(left: 0, child: _FaderScale()),
-
-              /// 🔹 SCALE RIGHT
-              const Positioned(right: 0, child: _FaderScale()),
-              Container(
-                width: 28,
-                height: 170,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(0),
-                  gradient: LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: [
-                      Colors.grey.shade800,
-                      Colors.black,
-                      Colors.grey.shade900,
-                    ],
-                  ),
-                  border: Border.all(color: Colors.black, width: 1.2),
-                  boxShadow: const [
-                    BoxShadow(
-                      color: Colors.black87,
-                      blurRadius: 6,
-                      offset: Offset(0, 4),
-                    ),
-                  ],
-                ),
-              ),
-
-              /// แถบ Volume เรืองแสง
-              Align(
-                alignment: Alignment.bottomCenter,
-                child: FractionallySizedBox(
-                  heightFactor: isMuted ? 0 : value,
-                  child: Container(
-                    width: 2,
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(4),
-                      gradient: LinearGradient(
-                        begin: Alignment.bottomCenter,
-                        end: Alignment.topCenter,
-                        colors: [
-                          Colors.greenAccent,
-                          Colors.green,
-                          Colors.green.shade900,
-                        ],
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.greenAccent.withValues(alpha: 0.5),
-                          blurRadius: 8,
-                          spreadRadius: 1,
-                        ),
+        Expanded(
+          child: SizedBox(
+            height: 150,
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                /// รางเหล็กของ Fader
+                ///
+                const Positioned(left: 0, child: _FaderScale()),
+          
+                /// 🔹 SCALE RIGHT
+                const Positioned(right: 0, child: _FaderScale()),
+                Container(
+                  width: 28,
+                  height: 170,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(0),
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [
+                        Colors.grey.shade800,
+                        Colors.black,
+                        Colors.grey.shade900,
                       ],
                     ),
+                    border: Border.all(color: Colors.black, width: 1.2),
+                    boxShadow: const [
+                      BoxShadow(
+                        color: Colors.black87,
+                        blurRadius: 6,
+                        offset: Offset(0, 4),
+                      ),
+                    ],
                   ),
                 ),
-              ),
-
-              /// Slider จริง (ซ่อน track เดิมออก)
-              RotatedBox(
-                quarterTurns: -1,
-                child: SizedBox(
-                  width: 170,
-                  child: SliderTheme(
-                    data: SliderTheme.of(context).copyWith(
-                      trackHeight: 0, // ❌ ซ่อน track เดิม
-                      thumbShape: const RectSliderThumbShape(),
-                      thumbColor: Colors.grey.shade200,
-                      overlayShape: SliderComponentShape.noOverlay,
-                    ),
-                    child: Slider(
-                      value: isMuted ? 0 : value,
-                      min: 0,
-                      max: 1,
-                      onChanged: onChanged,
+          
+                /// แถบ Volume เรืองแสง
+                Align(
+                  alignment: Alignment.bottomCenter,
+                  child: FractionallySizedBox(
+                    heightFactor: isMuted ? 0 : value,
+                    child: Container(
+                      width: 2,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(4),
+                        gradient: LinearGradient(
+                          begin: Alignment.bottomCenter,
+                          end: Alignment.topCenter,
+                          colors: [
+                            Colors.greenAccent,
+                            Colors.green,
+                            Colors.green.shade900,
+                          ],
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.greenAccent.withValues(alpha: 0.5),
+                            blurRadius: 8,
+                            spreadRadius: 1,
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ),
-              ),
-            ],
+          
+                /// Slider จริง (ซ่อน track เดิมออก)
+                RotatedBox(
+                  quarterTurns: -1,
+                  child: SizedBox(
+                    width: 170,
+                    child: SliderTheme(
+                      data: SliderTheme.of(context).copyWith(
+                        trackHeight: 0, // ❌ ซ่อน track เดิม
+                        thumbShape: const RectSliderThumbShape(),
+                        thumbColor: Colors.grey.shade200,
+                        overlayShape: SliderComponentShape.noOverlay,
+                      ),
+                      child: Slider(
+                        value: isMuted ? 0 : value,
+                        min: 0,
+                        max: 1,
+                        onChanged: onChanged,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
 
@@ -143,33 +145,36 @@ class MixerSlider extends StatelessWidget {
         const SizedBox(height: 10),
 
         /// MUTE BUTTON (LED STYLE)
-        GestureDetector(
-          onTap: onMuteToggled,
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 150),
-            width: 42,
-            height: 24,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(4),
-              color: isMuted ? Colors.red.shade800 : Colors.green.shade700,
-              boxShadow: [
-                BoxShadow(
-                  color: (isMuted ? Colors.red : Colors.green).withOpacity(0.7),
-                  blurRadius: 8,
-                  spreadRadius: 1,
-                ),
-                const BoxShadow(
-                  color: Colors.black87,
-                  offset: Offset(0, 3),
-                  blurRadius: 0,
-                ),
-              ],
-              border: Border.all(color: Colors.black, width: 1),
-            ),
-            child: Icon(
-              isMuted ? Icons.volume_off : Icons.volume_up,
-              size: 14,
-              color: Colors.white,
+        Padding(
+          padding: const EdgeInsets.fromLTRB(0, 0, 0, 8.0),
+          child: GestureDetector(
+            onTap: onMuteToggled,
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 150),
+              width: 42,
+              height: 24,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(4),
+                color: isMuted ? Colors.red.shade800 : Colors.green.shade700,
+                boxShadow: [
+                  BoxShadow(
+                    color: (isMuted ? Colors.red : Colors.green).withOpacity(0.7),
+                    blurRadius: 8,
+                    spreadRadius: 1,
+                  ),
+                  const BoxShadow(
+                    color: Colors.black87,
+                    offset: Offset(0, 3),
+                    blurRadius: 0,
+                  ),
+                ],
+                border: Border.all(color: Colors.black, width: 1),
+              ),
+              child: Icon(
+                isMuted ? Icons.volume_off : Icons.volume_up,
+                size: 14,
+                color: Colors.white,
+              ),
             ),
           ),
         ),

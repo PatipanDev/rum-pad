@@ -1,10 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:rum_tap/controllers/audio_controller.dart';
-import 'package:rum_tap/core/audio/audio_manager.dart';
 import 'package:rum_tap/l10n/app_localizations.dart';
 import 'package:rum_tap/provider/audio_provider.dart';
-import 'package:rum_tap/widgets/mixer/mixer_slider.dart';
 import 'dart:math' as math;
 
 class FadePanel extends ConsumerWidget {
@@ -17,9 +14,9 @@ class FadePanel extends ConsumerWidget {
 
     // สมมติว่าใน state ของคุณมีค่าเหล่านี้อยู่ (ถ้ายังไม่มี สามารถดูวิธีเพิ่มในหัวข้อถัดไปได้ครับ)
     // หรือหากยังไม่มี สามารถใช้ค่าจำลองภายในไปก่อนได้ เช่น 1500 มิลลิวินาที
-    final double fadeInSec = (state.fadeInDurationMs ?? 1500) / 1000;
-    final double fadeOutSec = (state.fadeOutDurationMs ?? 1500) / 1000;
-    final bool isFading = state.isFading ?? false;
+    final double fadeInSec = (state.fadeInDurationMs ) / 1000;
+    final double fadeOutSec = (state.fadeOutDurationMs) / 1000;
+    final bool isFading = state.isFading;
 
     final t = AppLocalizations.of(context)!;
     return Container(

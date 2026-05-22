@@ -1,14 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:rum_tap/controllers/audio_controller.dart';
-import 'package:rum_tap/core/audio/audio_manager.dart';
 import 'package:rum_tap/l10n/app_localizations.dart';
-import 'package:rum_tap/provider/audio_provider.dart';
 import 'package:rum_tap/provider/panel_provider.dart';
 import 'package:rum_tap/state/panel_state.dart';
 import 'package:rum_tap/widgets/mixer/fade_panel.dart';
 import 'package:rum_tap/widgets/mixer/mixer_panel.dart';
-import 'package:rum_tap/widgets/mixer/mixer_slider.dart';
 
 class MixerAndFadePanel extends ConsumerWidget {
   const MixerAndFadePanel({super.key});
@@ -24,7 +20,7 @@ class MixerAndFadePanel extends ConsumerWidget {
         children: [
           /// 🔝 TOP BAR (กินพื้นที่จริง)
           Container(
-            height: 48,
+            height: 36,
             padding: const EdgeInsets.symmetric(horizontal: 4),
             decoration: BoxDecoration(
               color: Colors.black, // เปลี่ยนจากสีแดงเป็นสีมิกเซอร์เข้มๆ เท่ๆ

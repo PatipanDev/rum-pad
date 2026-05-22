@@ -14,7 +14,7 @@ class AudioService {
   double sfxVolume = 0.5;
 
   bool _padsPreloaded = false;
-  static const int _playersPerSound = 4;
+  static const int _playersPerSound = 2;
 
   List<String> get allAssets => PadKitsSfx.kits
       .expand(

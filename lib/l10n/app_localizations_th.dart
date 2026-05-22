@@ -9,7 +9,7 @@ class AppLocalizationsTh extends AppLocalizations {
   AppLocalizationsTh([String locale = 'th']) : super(locale);
 
   @override
-  String get nameApp => 'รัม แพด';
+  String get nameApp => 'รำ แพ็ด';
 
   @override
   String get music => 'เพลง';

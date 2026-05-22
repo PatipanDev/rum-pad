@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:rum_tap/controllers/audio_controller.dart';
-import 'package:rum_tap/core/audio/audio_manager.dart';
 import 'package:rum_tap/l10n/app_localizations.dart';
 import 'package:rum_tap/provider/audio_provider.dart';
 import 'package:rum_tap/widgets/mixer/mixer_slider.dart';

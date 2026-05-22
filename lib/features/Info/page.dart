@@ -52,14 +52,14 @@ class AppInfoPage extends StatelessWidget {
                   SizedBox(height: 8),
 
                   Text(
-                    "Developer: Patipan Areyukong",
+                    "Developer: Maxim",
                     style: TextStyle(color: Colors.white),
                   ),
 
                   SizedBox(height: 8),
 
                   Text(
-                    "Email: patipan.dev@gmail.com",
+                    "Email: maximazu.dev@gmail.com",
                     style: TextStyle(color: Colors.white),
                   ),
                 ],
@@ -91,10 +91,6 @@ class AppInfoPage extends StatelessWidget {
                   ),
                   Text(
                     "• Music Mixer",
-                    style: TextStyle(color: Colors.white70),
-                  ),
-                  Text(
-                    "• Waveform Visualization",
                     style: TextStyle(color: Colors.white70),
                   ),
                   Text(

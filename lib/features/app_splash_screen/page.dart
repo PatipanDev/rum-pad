@@ -89,37 +89,36 @@ class AppSplashScreen extends StatelessWidget {
                         letterSpacing: 0.5,
                       ),
                     ),
-                  ],
-                ),
-                // สัญลักษณ์การโหลดเล็ก ๆ ด้านล่างสุด เพื่อบ่งบอกให้ผู้ใช้รู้ว่ากำลังเตรียมข้อมูลระบบอยู่
-                Positioned(
-                  bottom: 20,
-                  child: Column(
-                    children: [
-                      SizedBox(
-                        width: 120,
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(4),
-                          child: const LinearProgressIndicator(
-                            minHeight: 4,
-                            backgroundColor: Colors.white10,
-                            valueColor: AlwaysStoppedAnimation<Color>(
-                              Colors.white60,
-                            ),
+                    const SizedBox(height: 4),
+
+                    SizedBox(
+                      width: 120,
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(4),
+                        child: const LinearProgressIndicator(
+                          minHeight: 4,
+                          backgroundColor: Colors.white10,
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                            Colors.white60,
                           ),
                         ),
                       ),
-                      const SizedBox(height: 12),
-                      Text(
-                        'Loading...',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Colors.white.withValues(alpha: 0.4),
-                        ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Loading...',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.white.withValues(alpha: 0.4),
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
+                // สัญลักษณ์การโหลดเล็ก ๆ ด้านล่างสุด เพื่อบ่งบอกให้ผู้ใช้รู้ว่ากำลังเตรียมข้อมูลระบบอยู่
+                Positioned(bottom: 20, child: Column(children: [
+                      
+                    ],
+                  )),
               ],
             ),
           ),

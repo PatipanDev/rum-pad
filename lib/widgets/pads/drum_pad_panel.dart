@@ -31,10 +31,12 @@ class _DrumPadPanelState extends ConsumerState<DrumPadPanel> {
           children: [
             /// 🎚 TAB BAR
             Container(
+              height: 36,
               decoration: BoxDecoration(
                 color: Colors.black, // เปลี่ยนจากสีแดงเป็นสีมิกเซอร์เข้มๆ เท่ๆ
                 borderRadius: BorderRadius.circular(0),
                 border: Border.all(color: Colors.grey[900]!, width: 1),
+
               ),
               child: TabBar(
                 tabs: PadKitsSfx.kits.map((e) => Tab(text: e.id)).toList(),
@@ -70,153 +72,158 @@ class _DrumPadPanelState extends ConsumerState<DrumPadPanel> {
                           ),
                         ),
                         SizedBox(height: 2),
-                        SingleChildScrollView(
-                          padding: const EdgeInsets.all(4),
-                          child: Wrap(
-                            spacing: 4,
-                            runSpacing: 4,
-                            alignment: WrapAlignment.center,
-                            children: List.generate(pads.length, (index) {
-                              final asset = pads[index];
+                        Expanded(
+                          child: SingleChildScrollView(
+                            padding: const EdgeInsets.all(4),
+                            child: Wrap(
+                              spacing: 4,
+                              runSpacing: 4,
+                              alignment: WrapAlignment.center,
+                              children: List.generate(pads.length, (index) {
+                                final asset = pads[index];
 
-                              /// ⭐ ใช้ watch แทน setState (สำคัญ)
-                              final isPlaying = ref.watch(
-                                audioControllerProvider.select(
-                                  (s) => s.padPlaying[asset.path] ?? false,
-                                ),
-                              );
+                                /// ⭐ ใช้ watch แทน setState (สำคัญ)
+                                final isPlaying = ref.watch(
+                                  audioControllerProvider.select(
+                                    (s) => s.padPlaying[asset.path] ?? false,
+                                  ),
+                                );
 
-                              return SizedBox(
-                                width: 75,
-                                height: 75,
-                                child: GestureDetector(
-                                  onTap: () {
-                                    audio.playPad(asset.path);
-                                  },
-                                  child: Stack(
-                                    children: [
-                                      AnimatedContainer(
-                                        width: 75,
-                                        height: 75,
-                                        transform: Matrix4.translationValues(
-                                          0,
-                                          isPlaying ? 2 : 0, // ปุ่มยุบลง
-                                          0,
-                                        ),
-                                        duration: const Duration(
-                                          milliseconds: 200,
-                                        ),
-                                        decoration: BoxDecoration(
-                                          borderRadius: BorderRadius.circular(
-                                            10,
+                                return SizedBox(
+                                  width: 75,
+                                  height: 75,
+                                  child: GestureDetector(
+                                    onTap: () {
+                                      audio.playPad(asset.path);
+                                    },
+                                    child: Stack(
+                                      children: [
+                                        AnimatedContainer(
+                                          width: 75,
+                                          height: 75,
+                                          transform: Matrix4.translationValues(
+                                            0,
+                                            isPlaying ? 2 : 0, // ปุ่มยุบลง
+                                            0,
                                           ),
+                                          duration: const Duration(
+                                            milliseconds: 200,
+                                          ),
+                                          decoration: BoxDecoration(
+                                            borderRadius: BorderRadius.circular(
+                                              10,
+                                            ),
 
-                                          // 🔥 สีปุ่ม Rubber
-                                          gradient: LinearGradient(
-                                            begin: Alignment.topLeft,
-                                            end: Alignment.bottomRight,
-                                            colors: isPlaying
+                                            // 🔥 สีปุ่ม Rubber
+                                            gradient: LinearGradient(
+                                              begin: Alignment.topLeft,
+                                              end: Alignment.bottomRight,
+                                              colors: isPlaying
+                                                  ? [
+                                                      Colors
+                                                          .orangeAccent
+                                                          .shade400,
+                                                      Colors.orange.shade700,
+                                                      Colors.orange.shade900,
+                                                    ]
+                                                  : [
+                                                      Colors.grey.shade700,
+                                                      Colors.grey.shade900,
+                                                    ],
+                                            ),
+
+                                            border: Border.all(
+                                              color: isPlaying
+                                                  ? Colors.orangeAccent
+                                                  : Colors.black,
+                                              width: 1.4,
+                                            ),
+
+                                            boxShadow: isPlaying
                                                 ? [
-                                                    Colors
-                                                        .orangeAccent
-                                                        .shade400,
-                                                    Colors.orange.shade700,
-                                                    Colors.orange.shade900,
+                                                    // 🌟 ไฟเรืองรอบ pad
+                                                    BoxShadow(
+                                                      color: Colors.orangeAccent
+                                                          .withValues(
+                                                            alpha: 0.5,
+                                                          ),
+                                                      blurRadius: 4,
+                                                      spreadRadius: 2,
+                                                    ),
+
+                                                    // 🔽 เงากดลง
+                                                    const BoxShadow(
+                                                      color: Colors.black,
+                                                      offset: Offset(0, 2),
+                                                      blurRadius: 3,
+                                                    ),
                                                   ]
                                                 : [
-                                                    Colors.grey.shade700,
-                                                    Colors.grey.shade900,
+                                                    // 🔼 เงาปุ่มลอย
+                                                    const BoxShadow(
+                                                      color: Colors.black87,
+                                                      offset: Offset(0, 5),
+                                                      blurRadius: 6,
+                                                    ),
                                                   ],
                                           ),
 
-                                          border: Border.all(
-                                            color: isPlaying
-                                                ? Colors.orangeAccent
-                                                : Colors.black,
-                                            width: 1.4,
-                                          ),
-
-                                          boxShadow: isPlaying
-                                              ? [
-                                                  // 🌟 ไฟเรืองรอบ pad
-                                                  BoxShadow(
-                                                    color: Colors.orangeAccent
-                                                        .withValues(alpha: 0.9),
-                                                    blurRadius: 18,
-                                                    spreadRadius: 3,
-                                                  ),
-
-                                                  // 🔽 เงากดลง
-                                                  const BoxShadow(
-                                                    color: Colors.black,
-                                                    offset: Offset(0, 2),
-                                                    blurRadius: 3,
-                                                  ),
-                                                ]
-                                              : [
-                                                  // 🔼 เงาปุ่มลอย
-                                                  const BoxShadow(
-                                                    color: Colors.black87,
-                                                    offset: Offset(0, 5),
-                                                    blurRadius: 6,
-                                                  ),
-                                                ],
-                                        ),
-
-                                        child: LayoutBuilder(
-                                          builder: (context, constraints) {
-                                            return Padding(
-                                              padding: const EdgeInsets.all(
-                                                4.0,
-                                              ),
-                                              child: Column(
-                                                mainAxisAlignment:
-                                                    MainAxisAlignment.center,
-                                                children: [
-                                                  Icon(
-                                                    Icons.music_note,
-                                                    color: isPlaying
-                                                        ? Colors.black
-                                                        : Colors.white70,
-                                                    size: 20,
-                                                  ),
-                                                  const SizedBox(height: 4),
-
-                                                  Text(
-                                                    textAlign: TextAlign.center,
-                                                    asset.title.toString(),
-                                                    style: TextStyle(
-                                                      fontWeight:
-                                                          FontWeight.bold,
-                                                      fontSize: 8,
+                                          child: LayoutBuilder(
+                                            builder: (context, constraints) {
+                                              return Padding(
+                                                padding: const EdgeInsets.all(
+                                                  4.0,
+                                                ),
+                                                child: Column(
+                                                  mainAxisAlignment:
+                                                      MainAxisAlignment.center,
+                                                  children: [
+                                                    Icon(
+                                                      Icons.music_note,
                                                       color: isPlaying
                                                           ? Colors.black
-                                                          : Colors.white,
+                                                          : Colors.white70,
+                                                      size: 20,
                                                     ),
-                                                  ),
-                                                ],
-                                              ),
-                                            );
-                                          },
-                                        ),
-                                      ),
+                                                    const SizedBox(height: 4),
 
-                                      /// 🔒 LOCK OVERLAY (มุมขวาบน)
-                                      if (panel.isLocked)
-                                        const Positioned(
-                                          top: 4,
-                                          right: 4,
-                                          child: Icon(
-                                            Icons.lock,
-                                            size: 14,
-                                            color: Colors.red,
+                                                    Text(
+                                                      textAlign:
+                                                          TextAlign.center,
+                                                      asset.title.toString(),
+                                                      style: TextStyle(
+                                                        fontWeight:
+                                                            FontWeight.bold,
+                                                        fontSize: 8,
+                                                        color: isPlaying
+                                                            ? Colors.black
+                                                            : Colors.white,
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                              );
+                                            },
                                           ),
                                         ),
-                                    ],
+
+                                        /// 🔒 LOCK OVERLAY (มุมขวาบน)
+                                        if (panel.isLocked)
+                                          const Positioned(
+                                            top: 4,
+                                            right: 4,
+                                            child: Icon(
+                                              Icons.lock,
+                                              size: 14,
+                                              color: Colors.red,
+                                            ),
+                                          ),
+                                      ],
+                                    ),
                                   ),
-                                ),
-                              );
-                            }),
+                                );
+                              }),
+                            ),
                           ),
                         ),
                       ],

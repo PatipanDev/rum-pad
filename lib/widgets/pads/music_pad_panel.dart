@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:rum_tap/controllers/audio_controller.dart';
 import 'package:rum_tap/core/audio/audio_manager.dart';
 import 'package:rum_tap/features/drum_pad/models/pad_kits.dart';
 import 'package:rum_tap/provider/audio_provider.dart';
@@ -17,6 +18,7 @@ class _MusicPadPanelState extends ConsumerState<MusicPadPanel> {
   @override
   Widget build(BuildContext context) {
     final audio = ref.read(audioControllerProvider.notifier);
+    final _audioWatch = ref.watch(audioControllerProvider);
     final panel = ref.watch(panelControllerProvider);
     return DefaultTabController(
       length: PadKitsMusic.kits.length,
@@ -70,6 +72,26 @@ class _MusicPadPanelState extends ConsumerState<MusicPadPanel> {
                           ),
                         ),
                         SizedBox(height: 2),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16.0,
+                            vertical: 2,
+                          ), // เว้นขอบหน้าจอซ้ายขวา
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.start,
+                            children: [
+                              buildPlayPauseButton(audio),
+
+                              const SizedBox(width: 12),
+
+                              Expanded(child: buildMusicSlider(audio)),
+
+                              const SizedBox(width: 12),
+
+                              buildLoopButton(audio),
+                            ],
+                          ),
+                        ),
                         SingleChildScrollView(
                           padding: const EdgeInsets.all(4),
 
@@ -249,4 +271,263 @@ class _MusicPadPanelState extends ConsumerState<MusicPadPanel> {
       ),
     );
   }
+}
+
+Widget buildMusicSlider(AudioController audioController) {
+  // 1. ประกาศตัวแปรเก็บสถานะไว้ในฟังก์ชันนี้ได้เลย
+  bool isDragging = false;
+  double dragValue = 0.0;
+
+  return StreamBuilder<Duration?>(
+    stream: audioController.durationStream,
+    builder: (context, durationSnapshot) {
+      final duration = durationSnapshot.data ?? Duration.zero;
+
+      return StreamBuilder<Duration>(
+        stream: audioController.positionStream,
+        builder: (context, positionSnapshot) {
+          var position = positionSnapshot.data ?? Duration.zero;
+          if (position > duration) position = duration;
+
+          // 2. ใช้ StatefulBuilder ครอบส่วนที่ต้องขยับตามนิ้วตอนลาก
+          return StatefulBuilder(
+            builder: (context, setLocalState) {
+              // เช็กค่าตำแหน่งตุ่มเลื่อน
+              double sliderValue = isDragging
+                  ? dragValue
+                  : position.inMilliseconds.toDouble();
+
+              if (sliderValue > duration.inMilliseconds.toDouble()) {
+                sliderValue = duration.inMilliseconds.toDouble();
+              }
+
+              return Padding(
+                padding: const EdgeInsets.all(2.0),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+
+                  children: [
+                    SliderTheme(
+                      data: SliderTheme.of(context).copyWith(
+                        trackHeight: 4,
+                        activeTrackColor: Colors.amberAccent,
+                        inactiveTrackColor: Colors.white24,
+                        thumbColor: Colors.amber,
+                        overlayColor: Colors.amber.withAlpha(40),
+                        thumbShape: const RoundSliderThumbShape(
+                          enabledThumbRadius: 6.0,
+                          // activatedThumbRadius: 9.0, // แก้ตัวแปรตามรอบที่แล้วเรียบร้อย
+                        ),
+                        // materialTapTargetSize: MaterialTapTargetSize
+                        //     .shrinkWrap, // บีบพื้นที่กดให้พอดีตัว
+                        overlayShape: SliderComponentShape.noOverlay,
+                      ),
+
+                      child: Slider(
+                        min: 0.0,
+                        max: duration.inMilliseconds.toDouble(),
+                        value: sliderValue,
+
+                        // ⚡ เปลี่ยนจาก setState ทั่วไป เป็น setLocalState ของ StatefulBuilder
+                        onChangeStart: (value) {
+                          setLocalState(() {
+                            isDragging = true;
+                            dragValue = value;
+                          });
+                        },
+
+                        onChanged: (value) {
+                          setLocalState(() {
+                            dragValue = value;
+                          });
+                        },
+
+                        onChangeEnd: (value) async {
+                          final seekTo = Duration(milliseconds: value.toInt());
+                          await audioController.seekCurrentMusic(seekTo);
+
+                          Future.delayed(const Duration(milliseconds: 200), () {
+                            setLocalState(() {
+                              isDragging = false;
+                            });
+                          });
+                        },
+                      ),
+                    ),
+
+                    // ตัวเลขเวลา ซ้าย-ขวา
+                    Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 2,
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            isDragging
+                                ? _formatDuration(
+                                    Duration(milliseconds: dragValue.toInt()),
+                                  )
+                                : _formatDuration(position),
+                            style: const TextStyle(
+                              color: Colors.white70,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+
+                          Text(
+                            _formatDuration(duration),
+                            style: const TextStyle(
+                              color: Colors.white38,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            },
+          );
+        },
+      );
+    },
+  );
+}
+
+// ฟังก์ชันเสริมสำหรับแปลงเวลาเป็นข้อความสวยๆ
+String _formatDuration(Duration duration) {
+  String minutes = duration.inMinutes.toString().padLeft(2, '0');
+  String seconds = (duration.inSeconds % 60).toString().padLeft(2, '0');
+  return '$minutes:$seconds';
+}
+
+Widget buildPlayPauseButton(AudioController audio) {
+  return StreamBuilder<bool>(
+    stream: audio.isPlayingStream, // 🚰 ดักฟังว่าเพลงกำลังเล่นอยู่ไหม
+    builder: (context, snapshot) {
+      final isPlaying = snapshot.data ?? false;
+
+      return GestureDetector(
+        onTap: () {
+          if (isPlaying) {
+            audio.pauseMusic(); // ⏸️ พักเพลง
+          } else {
+            audio.resumeMusic(); // ▶️ เล่นต่อ
+          }
+        },
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          width: 32, // ขนาดปุ่มกำลังพอดีนิ้วสัมผัส
+          height: 32,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            // 🎨 ใส่เงาเรืองแสงรอบปุ่ม (Glow Effect) ถ้ากำลังเล่นอยู่ไฟจะสว่างขึ้น
+            boxShadow: [
+              BoxShadow(
+                color: isPlaying
+                    ? Colors.amber.withAlpha(80)
+                    : Colors.black.withAlpha(60),
+                blurRadius: isPlaying ? 12 : 6,
+                offset: const Offset(0, 3),
+              ),
+            ],
+            // 🌈 ไล่เฉดสีปุ่มให้ดูมีมิติเหมือนปุ่มกดจริงๆ
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: isPlaying
+                  ? [
+                      Colors.amber.shade400,
+                      Colors.amber.shade600,
+                    ] // ตอนเล่น: สีเหลืองทองเด่นชัด
+                  : [
+                      Colors.grey.shade800,
+                      Colors.grey.shade900,
+                    ], // ตอนหยุด: โทนเข้มกลืนกับแผง
+            ),
+          ),
+          // 🎬 ใส่แอนิเมชันตอนสลับรูปไอคอนไม่ให้มันตัดฉับเกินไป
+          child: AnimatedSwitcher(
+            duration: const Duration(milliseconds: 200),
+            transitionBuilder: (child, animation) {
+              return ScaleTransition(scale: animation, child: child);
+            },
+            // สลับไอคอนตามสถานะเพลง
+            child: Icon(
+              isPlaying ? Icons.pause_rounded : Icons.play_arrow_rounded,
+              key: ValueKey<bool>(
+                isPlaying,
+              ), // ใส่ Key เพื่อให้มีแอนิเมชันสลับไอคอน
+              size: 24,
+              color: isPlaying ? Colors.black : Colors.white,
+            ),
+          ),
+        ),
+      );
+    },
+  );
+}
+
+Widget buildLoopButton(AudioController audio) {
+  return StreamBuilder<bool>(
+    stream: audio.isLoopingStream, // 🚰 ฟังสถานะ Loop
+    builder: (context, snapshot) {
+      final isLooping = snapshot.data ?? false;
+
+      return GestureDetector(
+        onTap: () async {
+          await audio.toggleLoop();
+        },
+
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          width: 32,
+          height: 32,
+
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+
+            boxShadow: [
+              BoxShadow(
+                color: isLooping
+                    ? Colors.lightBlueAccent.withAlpha(80)
+                    : Colors.black.withAlpha(60),
+                blurRadius: isLooping ? 12 : 6,
+                offset: const Offset(0, 3),
+              ),
+            ],
+
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+
+              colors: isLooping
+                  ? [Colors.lightBlue.shade300, Colors.blue.shade700]
+                  : [Colors.grey.shade800, Colors.grey.shade900],
+            ),
+          ),
+
+          child: AnimatedSwitcher(
+            duration: const Duration(milliseconds: 200),
+
+            transitionBuilder: (child, animation) {
+              return ScaleTransition(scale: animation, child: child);
+            },
+
+            child: Icon(
+              Icons.repeat_rounded,
+              key: ValueKey<bool>(isLooping),
+              size: 24,
+              color: isLooping ? Colors.white : Colors.white70,
+            ),
+          ),
+        ),
+      );
+    },
+  );
 }

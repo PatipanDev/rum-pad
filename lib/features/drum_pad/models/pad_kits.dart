@@ -23,6 +23,65 @@ class PadKitsMusic {
       id: "1",
       name: "ALL",
       audioSamples: [
+        // AudioSample(
+        //   title: "Kick Drum",
+        //   path: "assets/pad/sound_effect/drum.mp3",
+        // ),
+        // AudioSample(
+        //   title: "Heavenly Pad",
+        //   path: "assets/pad/sound_effect/heavenly.mp3",
+        // ),
+        // AudioSample(
+        //   title: "Snare Drum",
+        //   path: "assets/pad/sound_effect/drum.mp3",
+        // ),
+        AudioSample(
+          title: "Beard",
+          path: "assets/pad/sound/beard.mp3",
+        ),
+        AudioSample(
+          title: "Jason Farnham Get Outside",
+          path: "assets/pad/sound/jason_farnham_get_outside.mp3",
+        ),
+        AudioSample(
+          title: "Lambada",
+          path: "assets/pad/sound/lambada.mp3",
+        ),
+        AudioSample(
+          title: "Melon",
+          path: "assets/pad/sound/melon.mp3",
+        ),
+      ],
+    ),
+
+    KitModel(
+      id: "2",
+      name: "HIPHOP",
+      audioSamples: [
+        AudioSample(
+          title: "Kick Drum",
+          path: "assets/pad/sound_effect/drum.mp3",
+        ),
+        AudioSample(
+          title: "Heavenly Pad",
+          path: "assets/pad/sound_effect/heavenly.mp3",
+        ),
+        AudioSample(
+          title: "Snare Drum",
+          path: "assets/pad/sound_effect/drum.mp3",
+        ),
+      ],
+    ),
+  ];
+}
+
+
+class PadKitsSfx {
+  static const List<KitModel> kits = [
+    KitModel(
+      id: "1",
+      name: "ALL",
+      audioSamples: [
         AudioSample(
           title: "Kick Drum",
           path: "assets/pad/sound_effect/drum.mp3",

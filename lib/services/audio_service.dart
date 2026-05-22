@@ -1,4 +1,3 @@
-import 'package:flutter/rendering.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:rum_tap/features/drum_pad/models/pad_kits.dart';
 
@@ -17,14 +16,7 @@ class AudioService {
   bool _padsPreloaded = false;
   static const int _playersPerSound = 4;
 
-  List<String> get allAssets => PadKitsMusic.kits
-      .expand(
-        (kit) => kit.audioSamples,
-      ) // ยุบรวมให้เหลือ List ของ AudioSample ทุกตัว
-      .map((sample) => sample.path) // ดึงเอาเฉพาะ Path ของไฟล์เสียงออกมา
-      .toList();
-
-  List<String> get allMusicAssets => PadKitsMusic.kits
+  List<String> get allAssets => PadKitsSfx.kits
       .expand(
         (kit) => kit.audioSamples,
       ) // ยุบรวมให้เหลือ List ของ AudioSample ทุกตัว
@@ -65,20 +57,33 @@ class AudioService {
     _musicPads[asset] = p;
   }
 
-  Future<void> preloadMusicPads(List<String> assets) async {
-    for (final asset in assets) {
-      if (_musicPads.containsKey(asset)) continue;
-      final player = AudioPlayer();
-      await player.setAsset(asset);
-      player.setLoopMode(LoopMode.one); // ⭐ เพลงวน
-      player.setVolume(musicVolume);
+  // Future<void> preloadMusicPads(List<String> assets) async {
+  //   for (final asset in assets) {
+  //     if (_musicPads.containsKey(asset)) continue;
+  //     final player = AudioPlayer();
+  //     await player.setAsset(asset);
+  //     player.setLoopMode(LoopMode.one); // ⭐ เพลงวน
+  //     player.setVolume(musicVolume);
 
-      _musicPads[asset] = player;
+  //     _musicPads[asset] = player;
+  //   }
+  // }
+
+  Future<void> stopMusic() async {
+    // 1. เช็กก่อนว่าตอนนี้มีเพลงกำลังเล่นอยู่จริงไหม
+    if (_currentMusicPlayer != null) {
+      // 2. สั่งหยุดเครื่องเล่นปัจจุบันให้สนิท
+      await _currentMusicPlayer!.stop();
+
+      // 3. รีเซ็ตเวลากลับไปที่เริ่มต้น (วินาทีที่ 0) เพื่อเตรียมพร้อมสำหรับครั้งต่อไป
+      await _currentMusicPlayer!.seek(Duration.zero);
+
+      // 4. ล้างค่าตัวแปรอ้างอิงให้เป็น null เพื่อเคลียร์สถานะ (State)
+      _currentMusicPlayer = null;
+      _currentAsset = null;
+
+      print('หยุดเล่นเพลงเรียบร้อยแล้ว');
     }
-  }
-
-  Future<void> stopMusic(String asset) async {
-    await _musicPads[asset]?.stop();
   }
 
   Future<void> stopPad(String asset) async {
@@ -94,7 +99,6 @@ class AudioService {
   }
 
   // ---------- PAD SOUND ----------
-
   Future<void> preloadPads(List<String> assets) async {
     if (_padsPreloaded) return;
     _padsPreloaded = true;
@@ -170,28 +174,75 @@ class AudioService {
   }
 
   Future<void> playMusic(String asset) async {
-    final player = _musicPads[asset];
-
-    if (player == null) {
-      debugPrint("Music not preloaded: $asset");
-      return;
+    // ⭐ 1. หยุดเพลงเก่าที่กำลังเล่นอยู่ให้สนิทก่อน (ถ้ามี)
+    if (musicPlayer.playing) {
+      await musicPlayer.stop();
     }
 
-    /// ⭐ 1. หยุดเพลงปัจจุบัน (ถ้ามี)
-    await _currentMusicPlayer?.stop();
+    // ⭐ 2. ดึงหรือสร้างเครื่องเล่นตัวใหม่สำหรับ Asset นี้
+    // (สมมติว่าดึงมาจาก _musicPads ที่เราเคยทำ Preload ไว้ หรือใช้ตัวแปร musicPlayer ของคุณ)
+    final player = musicPlayer;
 
-    /// ⭐ 2. ตั้งตัวใหม่เป็น active
+    // ⭐ 3. โหลดไฟล์เสียง (ใช้ setAsset ให้ถูกประเภทไฟล์)
+    // หมายเหตุ: ถ้าใช้ระบบ Preload มาก่อนแล้ว ขั้นตอนนี้สามารถข้ามไปได้เลยครับ
+    await player.setAsset(asset);
+
+    // ⭐ 4. รีเซ็ตเวลาเริ่มต้นใหม่กลับไปที่วินาทีที่ 0
+    await player.seek(Duration.zero);
+
+    // ⭐ 5. อัปเดตสถานะว่าตอนนี้เครื่องเล่นตัวนี้กำลังทำงานอยู่
     _currentMusicPlayer = player;
     _currentAsset = asset;
 
-    /// ⭐ 3. reset แล้วเล่นใหม่
-    await player.seek(Duration.zero);
-
-    /// ⭐ 4. เล่น
-    await player.play();
-
-    /// ⭐ 5. subscribe แค่ครั้งเดียว (กัน leak)
+    // ⭐ 6. ลงทะเบียน Listener (ดักฟังสถานะ) ก่อนที่จะกดเล่นเสียง
     _attachListener(player, asset);
+
+    // ⭐ 7. สั่งเล่นเพลง
+    // แนะนำ: ไม่ต้องใส่ await หน้า play() ก็ได้ครับ หากต้องการให้แอปทำงานต่อไปได้เลยโดยไม่ต้องรอให้เพลงเล่นจนจบ
+    player.play();
+  }
+
+  Stream<Duration> get currentPositionStream {
+    return musicPlayer.positionStream;
+  }
+
+  // 🟢 แก้ไข: ดึงความยาวเพลงรวมจาก musicPlayer ตัวหลักเช่นกัน
+  Stream<Duration?> get currentDurationStream {
+    return musicPlayer.durationStream;
+  }
+
+  // ฟังก์ชันเลื่อนเวลาเพลง (ตอนที่คนลาก Slider บนหน้าจอ)
+  Future<void> seekCurrentMusic(Duration position) async {
+    await _currentMusicPlayer?.seek(position);
+  }
+
+  Future<void> pauseMusic() async {
+    // เช็กก่อนว่าเครื่องเล่นกำลังเล่นเพลงอยู่จริง ๆ ไหม
+    if (musicPlayer.playing) {
+      await musicPlayer.pause();
+      print('พักเล่นเพลงชั่วคราวแล้ว');
+    }
+  }
+
+  //เล่นเพลงต่อ
+  Future<void> resumeMusic() async {
+    // เช็กก่อนว่าเพลงหยุดอยู่ และเครื่องเล่นถูกโหลดเพลงไว้แล้วจริง ๆ (ไม่มีค่าเป็น null)
+    if (!musicPlayer.playing && _currentMusicPlayer != null) {
+      await musicPlayer.play();
+      print('เล่นเพลงต่อจากจุดเดิมแล้ว');
+    }
+  }
+
+  Stream<bool> get isPlayingStream => musicPlayer.playingStream;
+  Stream<bool> get isLoopingStream =>
+      musicPlayer.loopModeStream.map((mode) => mode == LoopMode.one);
+
+  Future<void> enableLoopOne() async {
+    await musicPlayer.setLoopMode(LoopMode.one);
+  }
+
+  Future<void> disableLoop() async {
+    await musicPlayer.setLoopMode(LoopMode.off);
   }
 
   // ---------- VOLUME ----------
@@ -239,23 +290,27 @@ class AudioService {
 
   // 1. ฟังก์ชันเปิดเพลงพร้อม Fade In
   // ---------- FADE IN สำหรับเพลงทั้งหมดที่เก็บไว้ ----------
-  Future<void> fadeInAllMusicVolume({
+  Future<void> fadeInMusicVolume({
     Duration duration = const Duration(milliseconds: 1500),
   }) async {
-    if (_musicPads.isEmpty) return;
+    // ไม่มี player ปัจจุบัน
+    final player = _currentMusicPlayer;
+    if (player == null) return;
 
-    final int steps = 30;
+    // ไม่มีเพลงเล่นอยู่
+    if (!player.playing) return;
+
+    const int steps = 30;
     final Duration interval = duration ~/ steps;
 
-    // 🔥 อ่าน volume เป้าหมายจาก global musicVolume
+    // volume เป้าหมายจาก global
     final double targetVolume = musicVolume;
 
-    // เริ่มจาก volume ปัจจุบัน (สำคัญมาก)
-    double currentVolume = 0.0;
+    // เริ่มจาก volume ปัจจุบัน
+    double currentVolume = player.volume;
 
-    // อ่าน volume ปัจจุบันจาก player ตัวแรก (สมมุติว่าทุกตัวเท่ากัน)
-    final firstPlayer = _musicPads.values.first;
-    currentVolume = firstPlayer.volume;
+    // ถ้า volume ถึงอยู่แล้ว ไม่ต้อง fade
+    if (currentVolume >= targetVolume) return;
 
     final double volumeStep = (targetVolume - currentVolume) / steps;
 
@@ -263,29 +318,36 @@ class AudioService {
       await Future.delayed(interval);
 
       currentVolume += volumeStep;
+
+      // กันเกิน
       currentVolume = currentVolume.clamp(0.0, targetVolume);
 
-      for (final player in _musicPads.values) {
-        await player.setVolume(currentVolume);
-      }
+      await player.setVolume(currentVolume);
     }
 
-    // จบแบบเป๊ะ
-    for (final player in _musicPads.values) {
-      await player.setVolume(targetVolume);
-    }
+    // จบแบบตรงเป๊ะ
+    await player.setVolume(targetVolume);
   }
 
-  Future<void> fadeOutAllMusicVolume({
+  Future<void> fadeOutMusicVolume({
     Duration duration = const Duration(milliseconds: 1500),
   }) async {
-    if (_musicPads.isEmpty) return;
+    final player = _currentMusicPlayer;
 
-    final int steps = 30;
+    // ไม่มี player
+    if (player == null) return;
+
+    // ไม่มีเพลงเล่น
+    if (!player.playing) return;
+
+    const int steps = 30;
     final Duration interval = duration ~/ steps;
 
-    final firstPlayer = _musicPads.values.first;
-    double currentVolume = firstPlayer.volume;
+    // volume ปัจจุบัน
+    double currentVolume = player.volume;
+
+    // ถ้า mute อยู่แล้ว
+    if (currentVolume <= 0) return;
 
     final double volumeStep = currentVolume / steps;
 
@@ -293,16 +355,15 @@ class AudioService {
       await Future.delayed(interval);
 
       currentVolume -= volumeStep;
+
+      // กันค่าติดลบ
       currentVolume = currentVolume.clamp(0.0, 1.0);
 
-      for (final player in _musicPads.values) {
-        await player.setVolume(currentVolume);
-      }
+      await player.setVolume(currentVolume);
     }
 
-    for (final player in _musicPads.values) {
-      await player.setVolume(0);
-    }
+    // จบแบบเป๊ะ
+    await player.setVolume(0);
   }
 
   // ---------- FADE OUT สำหรับเพลงทั้งหมดที่กำลังเล่น ----------

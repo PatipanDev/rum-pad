@@ -43,7 +43,7 @@ class _AppBootstrapState extends ConsumerState<AppBootstrap> {
 
       await audio.init();
       await audio.preloadPads();
-      await audio.preloadMusics();
+      // await audio.preloadMusics();
 
       setState(() {
         _ready = true;

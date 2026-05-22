@@ -20,6 +20,7 @@ class AudioController extends Notifier<AudioState> {
       sfxVolume: 0.5,
       musicMuted: false,
       sfxMuted: false,
+      currentMode: false,
 
       /// ⭐ ต้องมีค่าเริ่มต้น
       padPlaying: {},
@@ -67,9 +68,9 @@ class AudioController extends Notifier<AudioState> {
     await _audio.preloadPads(_audio.allAssets);
   }
 
-  Future<void> preloadMusics() async {
-    await _audio.preloadMusicPads(_audio.allMusicAssets);
-  }
+  // Future<void> preloadMusics() async {
+  //   await _audio.preloadMusicPads(_audio.allMusicAssets);
+  // }
 
   // ---------- MUSIC ----------
   Future<void> playMusic(String asset) async {
@@ -81,7 +82,7 @@ class AudioController extends Notifier<AudioState> {
         padPlaying: {...state.padPlaying, previous: false},
       );
 
-      await _audio.stopMusic(previous);
+      await _audio.stopMusic();
     }
 
     /// ⭐ 2. set เพลงใหม่ + UI true
@@ -92,6 +93,41 @@ class AudioController extends Notifier<AudioState> {
 
     /// ⭐ 3. เล่นเพลงใหม่
     await _audio.playMusic(asset);
+  }
+
+  Stream<Duration> get positionStream => _audio.currentPositionStream;
+  Stream<Duration?> get durationStream => _audio.currentDurationStream;
+  Stream<bool> get isPlayingStream => _audio.isPlayingStream;
+  Stream<bool> get isLoopingStream => _audio.isLoopingStream;
+
+  Future<void> pauseMusic() async {
+    // เช็กก่อนว่าเครื่องเล่นกำลังเล่นเพลงอยู่จริง ๆ ไหม
+    await _audio.pauseMusic();
+  }
+
+  Future<void> resumeMusic() async {
+    await _audio.resumeMusic();
+  }
+
+  Future<void> toggleLoop() async {
+    if (state.currentMode == false) {
+      state = state.copyWith(currentMode: true);
+
+      await _audio.enableLoopOne();
+
+      print('เปิด Loop เพลง');
+    } else {
+      state = state.copyWith(currentMode: false);
+
+      await _audio.disableLoop();
+
+      print('ปิด Loop');
+    }
+  }
+
+  // ฟังก์ชันเลื่อนเวลาเพลง (ตอนที่คนลาก Slider บนหน้าจอ)
+  Future<void> seekCurrentMusic(Duration position) async {
+    await _audio.seekCurrentMusic(position);
   }
 
   // Future<void> playMusic(String asset) async {
@@ -129,7 +165,7 @@ class AudioController extends Notifier<AudioState> {
 
   Future<void> stopMusic(String asset) {
     state = state.copyWith(padPlaying: {...state.padPlaying, asset: false});
-    return _audio.stopMusic(asset);
+    return _audio.stopMusic();
   }
 
   void setMusicVolume(double v) async {
@@ -181,13 +217,13 @@ class AudioController extends Notifier<AudioState> {
 
   Future<void> fadeInAllMusicVolume() async {
     Duration duration = Duration(milliseconds: state.fadeInDurationMs);
-    await _audio.fadeInAllMusicVolume(duration: duration);
+    await _audio.fadeInMusicVolume(duration: duration);
     state = state.copyWith(musicMuted: false);
   }
 
   Future<void> fadeOutAllMusicVolume() async {
     Duration duration = Duration(milliseconds: state.fadeOutDurationMs);
-    await _audio.fadeOutAllMusicVolume(duration: duration);
+    await _audio.fadeOutMusicVolume(duration: duration);
     state = state.copyWith(musicMuted: true);
   }
 

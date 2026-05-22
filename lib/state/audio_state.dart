@@ -3,6 +3,7 @@ class AudioState {
   final double sfxVolume;
   final bool musicMuted;
   final bool sfxMuted;
+  final bool currentMode;
 
   final Map<String, bool> padPlaying;
 
@@ -17,6 +18,7 @@ class AudioState {
     required this.sfxVolume,
     required this.musicMuted,
     required this.sfxMuted,
+    required this.currentMode,
     required this.padPlaying,
     this.fadeInDurationMs = 1500, // ตั้งค่าเริ่มต้นไว้ที่ 1.5 วินาที
     this.fadeOutDurationMs = 1500, // ตั้งค่าเริ่มต้นไว้ที่ 1.5 วินาที
@@ -30,6 +32,7 @@ class AudioState {
     double? sfxVolume,
     bool? musicMuted,
     bool? sfxMuted,
+    bool? currentMode,
     Map<String, bool>? padPlaying,
     int? fadeInDurationMs,
     int? fadeOutDurationMs,
@@ -41,6 +44,7 @@ class AudioState {
       sfxVolume: sfxVolume ?? this.sfxVolume,
       musicMuted: musicMuted ?? this.musicMuted,
       sfxMuted: sfxMuted ?? this.sfxMuted,
+      currentMode: currentMode ?? this.currentMode,
 
       /// ⭐ สำคัญ
       padPlaying: padPlaying ?? this.padPlaying,

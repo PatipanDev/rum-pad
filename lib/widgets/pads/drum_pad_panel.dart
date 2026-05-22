@@ -20,7 +20,7 @@ class _DrumPadPanelState extends ConsumerState<DrumPadPanel> {
     print("LOCK STATE: ${panel.isLocked}");
 
     return DefaultTabController(
-      length: PadKitsMusic.kits.length,
+      length: PadKitsSfx.kits.length,
       child: Container(
         decoration: BoxDecoration(
           color: Colors.grey[900], // เปลี่ยนจากสีแดงเป็นสีมิกเซอร์เข้มๆ เท่ๆ
@@ -37,7 +37,7 @@ class _DrumPadPanelState extends ConsumerState<DrumPadPanel> {
                 border: Border.all(color: Colors.grey[900]!, width: 1),
               ),
               child: TabBar(
-                tabs: PadKitsMusic.kits.map((e) => Tab(text: e.id)).toList(),
+                tabs: PadKitsSfx.kits.map((e) => Tab(text: e.id)).toList(),
                 indicatorColor: Colors.white,
                 overlayColor: WidgetStateProperty.all(Colors.transparent),
                 labelColor: Colors
@@ -51,7 +51,7 @@ class _DrumPadPanelState extends ConsumerState<DrumPadPanel> {
               child: IgnorePointer(
                 ignoring: panel.isLocked,
                 child: TabBarView(
-                  children: PadKitsMusic.kits.map((kit) {
+                  children: PadKitsSfx.kits.map((kit) {
                     // 1. ดึงชื่อแนวเพลง
                     final String kitName = kit.name;
 
@@ -181,32 +181,19 @@ class _DrumPadPanelState extends ConsumerState<DrumPadPanel> {
                                                     size: 20,
                                                   ),
                                                   const SizedBox(height: 4),
-                                                  if (!isPlaying) ...[
-                                                    Text(
-                                                      textAlign:
-                                                          TextAlign.center,
-                                                      asset.title.toString(),
-                                                      style: TextStyle(
-                                                        fontWeight:
-                                                            FontWeight.bold,
-                                                        fontSize: 8,
-                                                        color: isPlaying
-                                                            ? Colors.black
-                                                            : Colors.white,
-                                                      ),
+
+                                                  Text(
+                                                    textAlign: TextAlign.center,
+                                                    asset.title.toString(),
+                                                    style: TextStyle(
+                                                      fontWeight:
+                                                          FontWeight.bold,
+                                                      fontSize: 8,
+                                                      color: isPlaying
+                                                          ? Colors.black
+                                                          : Colors.white,
                                                     ),
-                                                  ] else ...[
-                                                    const SizedBox(height: 2),
-                                                    GestureDetector(
-                                                      onTap: () => audio
-                                                          .stopPad(asset.path),
-                                                      child: const Icon(
-                                                        Icons.stop,
-                                                        color: Colors.black,
-                                                        size: 36,
-                                                      ),
-                                                    ),
-                                                  ],
+                                                  ),
                                                 ],
                                               ),
                                             );
